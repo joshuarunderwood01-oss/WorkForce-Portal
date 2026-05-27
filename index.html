@@ -1,0 +1,2485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkForce Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0f0f11; --surface:#1a1a1f; --surface2:#222228; --surface3:#2a2a32;
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+    --text:#f0f0f2; --text2:#9090a0; --text3:#5a5a6a;
+    --accent:#4f8ef7; --accent-dim:rgba(79,142,247,0.15);
+    --green:#34c97a; --green-dim:rgba(52,201,122,0.12);
+    --red:#f75c5c; --red-dim:rgba(247,92,92,0.12);
+    --amber:#f5a623; --amber-dim:rgba(245,166,35,0.12);
+    --purple:#a78bfa; --purple-dim:rgba(167,139,250,0.12);
+    --radius:12px; --radius-sm:8px;
+    --font:'DM Sans',sans-serif; --mono:'DM Mono',monospace;
+    --mode-toggle-bg:rgba(255,255,255,0.08);
+    --mode-toggle-icon-off:rgba(255,255,255,0.35);
+  }
+
+  /* ── LIGHT MODE ── applied via body.light class */
+  body.light {
+    --bg:#f4f5f7;
+    --surface:#ffffff;
+    --surface2:#f0f1f4;
+    --surface3:#e6e8ed;
+    --border:rgba(0,0,0,0.08);
+    --border2:rgba(0,0,0,0.14);
+    --text:#111318;
+    --text2:#4a4d58;
+    --text3:#9096a8;
+    --accent:#2563eb;
+    --accent-dim:rgba(37,99,235,0.1);
+    --green:#16a34a;
+    --green-dim:rgba(22,163,74,0.1);
+    --red:#dc2626;
+    --red-dim:rgba(220,38,38,0.1);
+    --amber:#d97706;
+    --amber-dim:rgba(217,119,6,0.1);
+    --purple:#7c3aed;
+    --purple-dim:rgba(124,58,237,0.1);
+    --mode-toggle-bg:rgba(0,0,0,0.06);
+    --mode-toggle-icon-off:rgba(0,0,0,0.25);
+  }
+
+  /* Smooth colour transitions when switching modes */
+  body, body * {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease, box-shadow 0.2s ease;
+  }
+  /* But don't animate layout-affecting properties */
+  body *, body *::before, body *::after {
+    transition-property: background-color, border-color, color, box-shadow, opacity;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+
+  /* LOADING */
+  #app-loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:999;flex-direction:column;gap:16px;}
+  .spinner{width:36px;height:36px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* AUTH */
+  #auth-screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px;background:var(--bg);position:relative;overflow:hidden;}
+  #auth-screen::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(79,142,247,.08) 0%,transparent 70%);top:-100px;left:-100px;pointer-events:none;}
+  #auth-screen::after{content:'';position:absolute;width:400px;height:400px;background:radial-gradient(circle,rgba(52,201,122,.06) 0%,transparent 70%);bottom:-50px;right:-50px;pointer-events:none;}
+  .auth-card{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:40px;position:relative;z-index:1;}
+  .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;}
+  .auth-logo-icon{width:40px;height:40px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;}
+  .auth-logo-icon svg{width:22px;height:22px;}
+  .auth-logo-text{font-size:18px;font-weight:600;letter-spacing:-.3px;}
+  .auth-logo-sub{font-size:11px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;}
+  .auth-title{font-size:22px;font-weight:600;letter-spacing:-.4px;margin-bottom:6px;}
+  .auth-subtitle{font-size:14px;color:var(--text2);margin-bottom:28px;}
+  .form-group{margin-bottom:16px;}
+  .form-label{font-size:12px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:7px;}
+  .form-input{width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:border-color .2s;}
+  .form-input:focus{border-color:var(--accent);}
+  .form-input::placeholder{color:var(--text3);}
+  select.form-input option{background:var(--surface2);color:var(--text);}
+  .btn-primary{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:15px;font-weight:500;cursor:pointer;transition:opacity .2s,transform .1s;margin-top:8px;}
+  .btn-primary:hover{opacity:.9;} .btn-primary:active{transform:scale(.99);} .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+  .auth-error{background:var(--red-dim);border:1px solid rgba(247,92,92,.2);color:var(--red);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-top:12px;display:none;}
+  .auth-demo{margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+  .auth-demo-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+  .demo-accounts{display:flex;flex-direction:column;gap:6px;}
+  .demo-account{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;transition:border-color .2s;}
+  .demo-account:hover{border-color:var(--border2);}
+  .demo-account-info{display:flex;flex-direction:column;}
+  .demo-account-name{font-size:13px;font-weight:500;}
+  .demo-account-email{font-size:11px;color:var(--text3);font-family:var(--mono);}
+  .demo-badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;}
+  .badge-employee{background:var(--accent-dim);color:var(--accent);}
+  .badge-manager{background:rgba(245,166,35,.15);color:var(--amber);}
+  .badge-admin{background:rgba(52,201,122,.12);color:var(--green);}
+
+  /* SHELL */
+  #app-shell{display:none;min-height:100vh;}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;}
+  .sidebar-logo{display:flex;align-items:center;gap:10px;padding:20px 18px 16px;border-bottom:1px solid var(--border);}
+  .sidebar-logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .sidebar-logo-icon svg{width:18px;height:18px;}
+  .sidebar-logo-text{font-size:15px;font-weight:600;letter-spacing:-.3px;}
+  .sidebar-nav{flex:1;padding:12px 10px;overflow-y:auto;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);color:var(--text2);font-size:14px;cursor:pointer;transition:background .15s,color .15s;border:none;background:none;width:100%;text-align:left;font-family:var(--font);white-space:nowrap;}
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:var(--accent-dim);color:var(--accent);}
+  .nav-item svg{width:18px;height:18px;flex-shrink:0;}
+  .nav-badge{margin-left:auto;background:var(--amber);color:#000;font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;min-width:18px;text-align:center;}
+  .sidebar-user{padding:14px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
+  .user-info{flex:1;min-width:0;}
+  .user-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .user-role{font-size:11px;color:var(--text3);}
+  .btn-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;flex-shrink:0;transition:background .15s;}
+  .btn-icon:hover{background:var(--surface2);color:var(--text);}
+  .btn-icon svg{width:15px;height:15px;}
+  .main{margin-left:220px;min-height:100vh;background:var(--bg);}
+  .topbar{height:60px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:50;}
+
+  /* ── THEME TOGGLE ── */
+  .theme-toggle{display:flex;align-items:center;gap:0;background:var(--mode-toggle-bg);border:1px solid var(--border2);border-radius:50px;padding:3px;cursor:pointer;position:relative;width:64px;height:30px;flex-shrink:0;}
+  .theme-toggle-thumb{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,0.25);transition:transform 0.25s cubic-bezier(.4,0,.2,1),background 0.2s;}
+  body.light .theme-toggle-thumb{transform:translateX(34px);background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.15);}
+  .theme-toggle-icons{display:flex;align-items:center;justify-content:space-between;width:100%;padding:0 5px;pointer-events:none;}
+  .theme-toggle-icon{font-size:12px;line-height:1;transition:opacity 0.2s;}
+  .theme-icon-dark{opacity:1;}
+  .theme-icon-light{opacity:var(--mode-toggle-icon-off);}
+  body.light .theme-icon-dark{opacity:var(--mode-toggle-icon-off);}
+  body.light .theme-icon-light{opacity:1;}
+  .topbar-title{font-size:17px;font-weight:600;letter-spacing:-.3px;}
+  .page{display:none;padding:28px;}
+  .page.active{display:block;}
+
+  /* CLOCK HERO */
+  .clock-hero{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px;display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:24px;position:relative;overflow:hidden;}
+  .clock-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(79,142,247,.06) 0%,transparent 60%);pointer-events:none;}
+  .clock-status-indicator{width:12px;height:12px;border-radius:50%;background:var(--text3);margin-bottom:16px;}
+  .clock-status-indicator.clocked-in{background:var(--green);box-shadow:0 0 0 4px var(--green-dim);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 4px var(--green-dim);}50%{box-shadow:0 0 0 8px rgba(52,201,122,.06);}}
+  .clock-time{font-family:var(--mono);font-size:56px;font-weight:400;letter-spacing:-1px;color:var(--text);line-height:1;margin-bottom:8px;}
+  .clock-date{font-size:14px;color:var(--text2);margin-bottom:6px;}
+  .clock-elapsed{font-family:var(--mono);font-size:13px;color:var(--text3);margin-bottom:28px;height:20px;}
+  .clock-elapsed.active{color:var(--green);}
+  .btn-clock{padding:14px 48px;border-radius:50px;font-family:var(--font);font-size:15px;font-weight:600;border:none;cursor:pointer;transition:all .2s;}
+  .btn-clock-in{background:var(--green);color:#fff;}
+  .btn-clock-in:hover{opacity:.9;transform:translateY(-1px);}
+  .btn-clock-out{background:var(--surface2);color:var(--red);border:1px solid rgba(247,92,92,.3);}
+  .btn-clock-out:hover{background:var(--red-dim);}
+  .clock-status-text{margin-top:14px;font-size:13px;color:var(--text3);}
+
+  /* STATS */
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+  .stat-label{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:500;margin-bottom:8px;}
+  .stat-value{font-family:var(--mono);font-size:28px;font-weight:500;letter-spacing:-.5px;}
+  .stat-sub{font-size:12px;color:var(--text3);margin-top:4px;}
+  .stat-green{color:var(--green);} .stat-amber{color:var(--amber);} .stat-blue{color:var(--accent);} .stat-purple{color:var(--purple);} .stat-red{color:var(--red);}
+
+  /* TABLES */
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .section-title{font-size:15px;font-weight:600;}
+  .section-sub{font-size:13px;color:var(--text3);margin-top:1px;}
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;}
+  thead tr{border-bottom:1px solid var(--border);}
+  th{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;padding:12px 16px;text-align:left;background:var(--surface2);}
+  td{padding:13px 16px;font-size:14px;color:var(--text2);border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+  tbody tr:hover td{background:var(--surface2);}
+  .td-mono{font-family:var(--mono);font-size:13px;}
+  .td-primary{color:var(--text);font-weight:500;}
+
+  /* PILLS */
+  .pill{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;font-family:var(--mono);}
+  .pill-green{background:var(--green-dim);color:var(--green);}
+  .pill-amber{background:var(--amber-dim);color:var(--amber);}
+  .pill-red{background:var(--red-dim);color:var(--red);}
+  .pill-blue{background:var(--accent-dim);color:var(--accent);}
+  .pill-purple{background:var(--purple-dim);color:var(--purple);}
+  .pill-gray{background:var(--surface3);color:var(--text3);}
+  .pill-purple{background:var(--purple-dim);color:var(--purple);}
+
+  /* TEAM */
+  .team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:24px;}
+  .team-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;align-items:center;gap:14px;}
+  .team-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0;}
+  .team-info{flex:1;min-width:0;}
+  .team-name{font-size:14px;font-weight:500;margin-bottom:2px;}
+  .team-detail{font-size:12px;color:var(--text3);}
+
+  /* LEAVE */
+  .leave-balance-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+  .request-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px;}
+  .request-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;}
+  .request-card-title{font-size:14px;font-weight:600;margin-bottom:3px;}
+  .request-card-meta{font-size:12px;color:var(--text3);font-family:var(--mono);}
+  .request-card-body{font-size:13px;color:var(--text2);margin-bottom:12px;}
+  .request-card-actions{display:flex;gap:8px;}
+  .leave-type-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:4px;}
+  .leave-type-btn{padding:10px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text2);font-family:var(--font);font-size:13px;cursor:pointer;text-align:center;transition:all .15s;}
+  .leave-type-btn:hover{border-color:var(--accent);color:var(--text);}
+  .leave-type-btn.selected{border-color:var(--accent);background:var(--accent-dim);color:var(--accent);}
+  .leave-warning{background:var(--red-dim);border:1px solid rgba(247,92,92,.25);color:var(--red);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:12px;display:none;}
+  .leave-info-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.6;}
+
+  /* BUTTONS */
+  .btn{padding:8px 16px;border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
+  .btn-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,201,122,.25);}
+  .btn-green:hover{background:rgba(52,201,122,.22);}
+  .btn-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(247,92,92,.25);}
+  .btn-red:hover{background:rgba(247,92,92,.22);}
+  .btn-blue{background:var(--accent);color:#fff;}
+  .btn-blue:hover{opacity:.9;}
+  .btn-ghost{background:var(--surface2);color:var(--text2);border:1px solid var(--border2);}
+  .btn-ghost:hover{background:var(--surface3);color:var(--text);}
+  .btn-sm{padding:6px 12px;font-size:12px;}
+  .btn-amber{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,166,35,.25);}
+  .btn-amber:hover{background:rgba(245,166,35,.22);}
+
+  /* TOAST */
+  .toast-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:9999;pointer-events:none;}
+  .toast{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px;min-width:240px;animation:slideIn .3s ease;pointer-events:auto;box-shadow:0 4px 24px rgba(0,0,0,.4);}
+  @keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+  .toast-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:500;padding:24px;opacity:0;pointer-events:none;transition:opacity .2s;}
+  .modal-overlay.open{opacity:1;pointer-events:all;}
+  .modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:28px;width:100%;max-width:480px;transform:translateY(12px);transition:transform .2s;}
+  .modal-overlay.open .modal{transform:translateY(0);}
+  .modal-title{font-size:17px;font-weight:600;margin-bottom:6px;}
+  .modal-sub{font-size:13px;color:var(--text2);margin-bottom:20px;}
+  .modal-actions{display:flex;gap:10px;margin-top:20px;}
+  .btn-secondary{flex:1;padding:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text2);font-family:var(--font);font-size:14px;cursor:pointer;transition:background .15s;}
+  .btn-secondary:hover{background:var(--surface3);color:var(--text);}
+  .btn-danger{flex:1;padding:10px;background:var(--red-dim);border:1px solid rgba(247,92,92,.25);border-radius:var(--radius-sm);color:var(--red);font-family:var(--font);font-size:14px;font-weight:500;cursor:pointer;transition:background .15s;}
+  .btn-danger:hover{background:rgba(247,92,92,.2);}
+  .btn-confirm{flex:1;padding:10px;background:var(--accent);border:none;border-radius:var(--radius-sm);color:#fff;font-family:var(--font);font-size:14px;font-weight:500;cursor:pointer;transition:opacity .15s;}
+  .btn-confirm:hover{opacity:.9;}
+
+  /* PROFILE */
+  .profile-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:500px;}
+  .profile-avatar-lg{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;margin-bottom:16px;}
+  .profile-name{font-size:22px;font-weight:600;margin-bottom:4px;}
+  .profile-email{font-size:14px;color:var(--text2);margin-bottom:20px;}
+  .profile-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);font-size:14px;}
+  .profile-row:last-child{border-bottom:none;}
+  .profile-row-label{color:var(--text3);font-size:12px;text-transform:uppercase;letter-spacing:.06em;}
+  .profile-row-value{font-weight:500;}
+
+  /* EMPTY STATE */
+  .empty-state{padding:40px;text-align:center;color:var(--text3);}
+  .empty-state svg{width:36px;height:36px;margin:0 auto 12px;display:block;opacity:.4;}
+  .empty-state p{font-size:14px;}
+
+  /* APPROVAL DETAIL */
+  .approval-detail{background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px;}
+  .approval-detail-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;}
+  .approval-detail-row:last-child{margin-bottom:0;}
+  .approval-detail-label{color:var(--text3);}
+  .approval-detail-value{color:var(--text);font-weight:500;}
+
+  /* == STAFF SETTINGS == */
+  .settings-employee-row{padding:18px 0;border-bottom:1px solid var(--border);}
+  .settings-employee-row:last-child{border-bottom:none;}
+  .settings-row-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .settings-emp-info{min-width:160px;}
+  .settings-emp-name{font-size:14px;font-weight:500;margin-bottom:2px;}
+  .settings-emp-dept{font-size:12px;color:var(--text3);}
+  .settings-fields{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;}
+  .settings-field{display:flex;flex-direction:column;gap:4px;}
+  .settings-field label{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;}
+  .settings-field input{padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);font-size:13px;outline:none;width:80px;transition:border-color .2s;}
+  .settings-field input:focus{border-color:var(--accent);}
+  .day-pattern{display:flex;gap:4px;align-items:center;}
+  .day-toggle{width:30px;height:30px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text3);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:var(--font);}
+  .day-toggle.active{background:var(--accent-dim);color:var(--accent);border-color:rgba(79,142,247,.4);}
+  .btn-expand-schedule{padding:6px 12px;background:var(--surface3);color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--font);font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:5px;}
+  .btn-expand-schedule:hover{background:var(--surface2);color:var(--text);}
+  .btn-save-settings{padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
+  .btn-save-settings:hover{opacity:.9;}
+
+  /* == SCHEDULE PANEL == */
+  .schedule-panel{display:none;margin-top:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;}
+  .schedule-panel.open{display:block;}
+  .schedule-panel-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;}
+  .schedule-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:8px;}
+  .schedule-day-row{display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);;min-width:320px;}
+  .schedule-day-row.inactive{opacity:.35;pointer-events:none;}
+  .schedule-day-label{font-size:12px;font-weight:600;color:var(--text2);width:30px;flex-shrink:0;}
+  .schedule-time-input{padding:6px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;width:106px;min-width:106px;flex-shrink:0;transition:border-color .2s;}
+  .schedule-time-input:focus{border-color:var(--accent);}
+  .schedule-sep{font-size:11px;color:var(--text3);flex-shrink:0;}
+
+  /* == USER MANAGEMENT == */
+  .user-mgmt-table tbody tr td{vertical-align:middle;}
+  .status-badge-active{background:var(--green-dim);color:var(--green);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;}
+  .status-badge-inactive{background:var(--surface3);color:var(--text3);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;}
+
+  /* == ARCHIVED SECTION == */
+  .archived-section{margin-top:24px;}
+  .archived-toggle{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;user-select:none;margin-bottom:0;}
+  .archived-toggle:hover{background:var(--surface3);}
+  .archived-toggle-label{font-size:13px;font-weight:500;color:var(--text2);}
+  .archived-toggle-count{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--surface3);color:var(--text3);}
+  .archived-chevron{margin-left:auto;font-size:12px;color:var(--text3);transition:transform .2s;display:inline-block;}
+  .archived-chevron.open{transform:rotate(180deg);}
+  .archived-list{display:none;border-top:none;}
+  .archived-list.open{display:block;}
+  .status-badge-active{background:var(--green-dim);color:var(--green);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;}
+  .status-badge-inactive{background:var(--surface3);color:var(--text3);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;}
+
+  /* SCROLLBAR */
+  /* == TEAM CALENDAR == */
+  .cal-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+  .cal-month-title{font-size:18px;font-weight:600;letter-spacing:-.3px;flex:1;text-align:center;}
+  .cal-nav-btn{width:36px;height:36px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text2);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;line-height:1;}
+  .cal-nav-btn:hover{background:var(--surface3);color:var(--text);}
+  .cal-legend{display:flex;gap:12px;margin-left:auto;}
+  .cal-legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);}
+  .cal-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .cal-day-headers{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px;}
+  .cal-day-hdr{text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:6px 0;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+  .cal-cell{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px;min-height:80px;cursor:pointer;transition:all .15s;position:relative;}
+  .cal-cell:hover{border-color:var(--border2);background:var(--surface2);}
+  .cal-cell.today{border-color:var(--accent);background:var(--accent-dim);}
+  .cal-cell.today .cal-day-num{color:var(--accent);font-weight:700;}
+  .cal-cell.selected{border-color:var(--purple);background:var(--purple-dim);box-shadow:0 0 0 2px rgba(167,139,250,0.2);}
+  .cal-cell.selected .cal-day-num{color:var(--purple);font-weight:700;}
+  .cal-cell.today.selected{border-color:var(--purple);background:var(--purple-dim);}
+  .cal-cell.empty{background:transparent;border-color:transparent;cursor:default;min-height:80px;}
+  .cal-cell.weekend{background:var(--surface2);}
+  .cal-cell.weekend{background:var(--surface2);}
+  .cal-day-num{font-size:12px;font-weight:600;color:var(--text3);margin-bottom:4px;}
+  .cal-cell.today .cal-day-num{color:var(--accent);}
+  .cal-chip{font-size:10px;font-weight:500;padding:2px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;}
+  .cal-chip-approved{background:var(--green-dim);color:var(--green);}
+  .cal-chip-pending{background:var(--amber-dim);color:var(--amber);}
+  .cal-chip-more{font-size:10px;color:var(--text3);padding:1px 4px;}
+  .cal-event-panel{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:16px;margin-top:12px;}
+  .cal-event-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-size:13px;font-weight:600;color:var(--text2);}
+  .cal-event-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+  .cal-event-row:last-child{border-bottom:none;}
+  .cal-event-name{font-size:13px;font-weight:500;flex:1;}
+  .cal-event-type{font-size:12px;color:var(--text3);}
+
+  /* == REPORTING == */
+  .rpt-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+  .rpt-tab{font-size:13px;font-weight:500;padding:10px 16px;border:none;background:none;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:var(--font);transition:color .15s;}
+  .rpt-tab:hover{color:var(--text);}
+  .rpt-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .rpt-filters{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;}
+  .rpt-filter-group{display:flex;flex-direction:column;gap:5px;}
+  .rpt-filter-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;}
+  .rpt-filter-input{padding:8px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color .2s;}
+  .rpt-filter-input:focus{border-color:var(--accent);}
+  .rpt-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+
+  /* == COMPANY SETTINGS == */
+  .dept-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);}
+  .dept-item-name{font-size:14px;font-weight:500;}
+  .dept-item-built-in{font-size:11px;color:var(--text3);font-style:italic;}
+  .btn-dept-delete{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1;padding:2px 6px;border-radius:4px;transition:color .15s,background .15s;}
+  .btn-dept-delete:hover{color:var(--red);background:var(--red-dim);}
+
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+
+  @media(max-width:768px){
+    .sidebar{width:60px;}
+    .sidebar-logo-text,.nav-item span,.sidebar-user .user-info{display:none;}
+    .main{margin-left:60px;}
+    .stats-grid{grid-template-columns:1fr 1fr;}
+    .clock-time{font-size:40px;}
+    .leave-balance-grid{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app-loading"><div class="spinner"></div><p style="font-size:13px;color:var(--text3);">Loading portal…</p></div>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
+          <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          <line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>
+        </svg>
+      </div>
+      <div><div class="auth-logo-text">WorkForce</div><div class="auth-logo-sub">Staff Portal</div></div>
+    </div>
+    <div class="auth-title">Welcome back</div>
+    <div class="auth-subtitle">Sign in to your account to continue</div>
+    <div class="form-group"><label class="form-label" for="auth-email">Email address</label><input class="form-input" type="email" id="auth-email" placeholder="you@company.com" autocomplete="email"></div>
+    <div class="form-group"><label class="form-label" for="auth-password">Password</label><input class="form-input" type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn-primary" id="btn-signin" onclick="signIn()">Sign in</button>
+    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-demo">
+      <div class="auth-demo-title">Demo accounts — click to fill</div>
+      <div class="demo-accounts">
+        <div class="demo-account" onclick="fillDemo('josh@workforce.demo','demo1234')">
+          <div class="demo-account-info"><span class="demo-account-name">Josh Underwood</span><span class="demo-account-email">josh@workforce.demo</span></div>
+          <span class="demo-badge badge-employee">Employee</span>
+        </div>
+        <div class="demo-account" onclick="fillDemo('rachel@workforce.demo','demo1234')">
+          <div class="demo-account-info"><span class="demo-account-name">Rachel Kibble</span><span class="demo-account-email">rachel@workforce.demo</span></div>
+          <span class="demo-badge badge-employee">Employee</span>
+        </div>
+        <div class="demo-account" onclick="fillDemo('claire@workforce.demo','demo1234')">
+          <div class="demo-account-info"><span class="demo-account-name">Claire Puffett</span><span class="demo-account-email">claire@workforce.demo</span></div>
+          <span class="demo-badge badge-employee">Employee</span>
+        </div>
+        <div class="demo-account" onclick="fillDemo('sarah.r@workforce.demo','demo1234')">
+          <div class="demo-account-info"><span class="demo-account-name">Sarah Rushbury</span><span class="demo-account-email">sarah.r@workforce.demo</span></div>
+          <span class="demo-badge badge-employee">Employee</span>
+        </div>
+        <div class="demo-account" onclick="fillDemo('dawn@workforce.demo','demo1234')">
+          <div class="demo-account-info"><span class="demo-account-name">Dawn Davies</span><span class="demo-account-email">dawn@workforce.demo</span></div>
+          <span class="demo-badge badge-manager">Manager</span>
+        </div>
+        <div class="demo-account" onclick="fillDemo('doreen@workforce.demo','demo1234')">
+          <div class="demo-account-info"><span class="demo-account-name">Doreen Heath</span><span class="demo-account-email">doreen@workforce.demo</span></div>
+          <span class="demo-badge badge-manager" style="background:rgba(167,139,250,.15);color:#a78bfa;">Sr. Manager</span>
+        </div>
+        <div class="demo-account" onclick="fillDemo('admin@workforce.demo','demo1234')">
+          <div class="demo-account-info"><span class="demo-account-name">Admin User</span><span class="demo-account-email">admin@workforce.demo</span></div>
+          <span class="demo-badge badge-admin">Admin</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
+          <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          <line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>
+        </svg>
+      </div>
+      <span class="sidebar-logo-text">WorkForce</span>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-avatar">?</div>
+      <div class="user-info"><div class="user-name" id="sidebar-name">Loading…</div><div class="user-role" id="sidebar-role"></div></div>
+      <button class="btn-icon" onclick="signOut()" title="Sign out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div><div class="topbar-title" id="topbar-title">Dashboard</div></div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text3);" id="topbar-time"></div>
+        <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Switch light / dark mode" aria-label="Toggle light and dark mode">
+          <div class="theme-toggle-thumb"></div>
+          <div class="theme-toggle-icons">
+            <span class="theme-toggle-icon theme-icon-dark">&#9790;</span>
+            <span class="theme-toggle-icon theme-icon-light">&#9728;</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- CLOCK PAGE -->
+    <div class="page" id="page-clock">
+      <div class="clock-hero">
+        <div class="clock-status-indicator" id="clock-indicator"></div>
+        <div class="clock-time" id="clock-display">00:00:00</div>
+        <div class="clock-date" id="clock-date-display"></div>
+        <div class="clock-elapsed" id="clock-elapsed">Not clocked in</div>
+        <button class="btn-clock btn-clock-in" id="btn-clock" onclick="toggleClock()">Clock In</button>
+        <div class="clock-status-text" id="clock-status-text">You are not currently clocked in</div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value stat-green" id="stat-today">0h 0m</div><div class="stat-sub">hours worked</div></div>
+        <div class="stat-card"><div class="stat-label">This week</div><div class="stat-value stat-blue" id="stat-week">0h 0m</div><div class="stat-sub">hours total</div></div>
+        <div class="stat-card"><div class="stat-label">Scheduled today</div><div class="stat-value stat-amber" id="stat-scheduled">—</div><div class="stat-sub" id="stat-scheduled-sub">start – finish</div></div>
+      </div>
+      <div class="section-header"><div><div class="section-title">Recent timesheet</div><div class="section-sub">Your last 7 entries vs scheduled hours</div></div></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Date</th><th>Scheduled</th><th>Clock in</th><th>Clock out</th><th>Duration</th><th>Variance</th></tr></thead>
+        <tbody id="timesheet-body"><tr><td colspan="6"><div class="empty-state"><p>No entries yet. Clock in to get started.</p></div></td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- LEAVE PAGE -->
+    <div class="page" id="page-leave">
+      <div class="leave-balance-grid" id="leave-balance-grid"></div>
+      <div class="leave-info-box" id="leave-pattern-info"></div>
+      <div class="section-header">
+        <div><div class="section-title">My leave requests</div><div class="section-sub">All submitted requests</div></div>
+        <button class="btn btn-blue" onclick="openModal('modal-new-leave')">+ Request leave</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Type</th><th>Dates</th><th>Days</th><th>Submitted</th><th>Status</th><th>Note</th></tr></thead>
+      <tbody id="my-leave-body"></tbody></table></div>
+    </div>
+
+    <!-- TEAM PAGE -->
+    <div class="page" id="page-team">
+      <div class="stats-grid" style="margin-bottom:24px;">
+        <div class="stat-card"><div class="stat-label">Clocked in now</div><div class="stat-value stat-green" id="mgr-clocked-in">—</div><div class="stat-sub">team members</div></div>
+        <div class="stat-card"><div class="stat-label">Not clocked in</div><div class="stat-value stat-amber" id="mgr-absent">—</div><div class="stat-sub">today</div></div>
+        <div class="stat-card"><div class="stat-label">Team size</div><div class="stat-value stat-blue" id="mgr-team-size">—</div><div class="stat-sub">active employees</div></div>
+      </div>
+      <div class="section-header"><div class="section-title">Team status</div></div>
+      <div class="team-grid" id="team-grid"></div>
+      <div class="section-header"><div><div class="section-title">Today's attendance</div><div class="section-sub">Live clock-in data vs scheduled hours</div></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Scheduled</th><th>Clock in</th><th>Clock out</th><th>Duration</th><th>Variance</th></tr></thead>
+      <tbody id="team-timesheet-body"></tbody></table></div>
+    </div>
+
+    <!-- APPROVALS PAGE -->
+    <div class="page" id="page-approvals">
+      <div class="stats-grid" style="margin-bottom:24px;">
+        <div class="stat-card"><div class="stat-label">Pending approval</div><div class="stat-value stat-amber" id="appr-pending-count">—</div><div class="stat-sub">requests</div></div>
+        <div class="stat-card"><div class="stat-label">Approved this month</div><div class="stat-value stat-green" id="appr-approved-count">—</div><div class="stat-sub">requests</div></div>
+        <div class="stat-card"><div class="stat-label">On leave today</div><div class="stat-value stat-blue" id="appr-onleave-count">—</div><div class="stat-sub">team members</div></div>
+      </div>
+      <div class="section-header"><div><div class="section-title">Pending requests</div><div class="section-sub">Awaiting your decision</div></div></div>
+      <div id="approvals-pending-list"></div>
+      <div style="margin-top:32px;">
+        <div class="section-header"><div><div class="section-title">Recent decisions</div><div class="section-sub">Last 30 days</div></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Days</th><th>Decision</th><th>Date</th></tr></thead>
+        <tbody id="approvals-history-body"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- STAFF SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+      <!-- Sub-tabs -->
+      <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:24px;">
+        <button class="nav-item active" id="stab-workpatterns" onclick="switchSettingsTab('workpatterns')" style="border-radius:var(--radius-sm) var(--radius-sm) 0 0;border-bottom:2px solid var(--accent);">Work patterns</button>
+        <button class="nav-item" id="stab-users" onclick="switchSettingsTab('users')" style="border-radius:var(--radius-sm) var(--radius-sm) 0 0;">User management</button>
+      </div>
+      <!-- Work patterns sub-page -->
+      <div id="settings-tab-workpatterns">
+        <div class="section-header" style="margin-bottom:16px;">
+          <div><div class="section-title">Work patterns & leave</div><div class="section-sub">Set working hours, schedules and leave allowances per employee</div></div>
+        </div>
+        <div class="table-wrap" style="padding:0 20px;">
+          <div id="settings-employee-list" style="padding:4px 0;"></div>
+        </div>
+      </div>
+      <!-- User management sub-page -->
+      <div id="settings-tab-users" style="display:none;">
+        <div class="section-header">
+          <div><div class="section-title">User management</div><div class="section-sub">Add staff, edit details, or deactivate leavers</div></div>
+          <button class="btn btn-blue" onclick="openAddUserModal()">+ Add user</button>
+        </div>
+        <div class="table-wrap">
+          <table class="user-mgmt-table"><thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Reports to</th><th></th></tr></thead>
+          <tbody id="user-mgmt-body"></tbody></table>
+        </div>
+        <!-- Archived users section -->
+        <div class="archived-section">
+          <div class="archived-toggle" onclick="toggleArchivedSection()">
+            <span class="archived-toggle-label">Archived / inactive users</span>
+            <span class="archived-toggle-count" id="archived-count">0</span>
+            <span class="archived-chevron" id="archived-chevron">▼</span>
+          </div>
+          <div class="archived-list" id="archived-list">
+            <div class="table-wrap" style="border-radius:0 0 var(--radius) var(--radius);">
+              <table><thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Reports to</th><th></th></tr></thead>
+              <tbody id="archived-body"></tbody></table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div class="page" id="page-profile">
+      <div class="profile-card">
+        <div class="profile-avatar-lg" id="profile-avatar-lg"></div>
+        <div class="profile-name" id="profile-name"></div>
+        <div class="profile-email" id="profile-email"></div>
+        <div class="profile-row"><span class="profile-row-label">Role</span><span class="profile-row-value" id="profile-role"></span></div>
+        <div class="profile-row"><span class="profile-row-label">Reports to</span><span class="profile-row-value" id="profile-manager">—</span></div>
+        <div class="profile-row"><span class="profile-row-label">Department</span><span class="profile-row-value" id="profile-dept"></span></div>
+        <div class="profile-row"><span class="profile-row-label">Member since</span><span class="profile-row-value" id="profile-since"></span></div>
+        <div class="profile-row"><span class="profile-row-label">Annual leave entitlement</span><span class="profile-row-value" id="profile-leave"></span></div>
+      </div>
+    </div>
+
+    <!-- TEAM CALENDAR PAGE (All users) -->
+    <div class="page" id="page-calendar">
+      <div class="cal-toolbar">
+        <button class="cal-nav-btn" onclick="calPrev()">&#8249;</button>
+        <div class="cal-month-title" id="cal-month-title"></div>
+        <button class="cal-nav-btn" onclick="calNext()">&#8250;</button>
+        <div class="cal-legend">
+          <span class="cal-legend-item"><span class="cal-dot" style="background:var(--green);"></span>Approved</span>
+          <span class="cal-legend-item"><span class="cal-dot" style="background:var(--amber);"></span>Pending</span>
+        </div>
+      </div>
+      <div class="cal-day-headers" id="cal-day-headers"></div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-event-panel" id="cal-event-panel" style="display:none;">
+        <div class="cal-event-panel-header">
+          <span id="cal-event-date"></span>
+          <button onclick="document.getElementById('cal-event-panel').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1;">✕</button>
+        </div>
+        <div id="cal-event-list"></div>
+      </div>
+    </div>
+
+    <!-- REPORTING PAGE (Manager / Senior Manager / Admin) -->
+    <div class="page" id="page-reporting">
+      <!-- Sub-tabs -->
+      <div class="rpt-tabs">
+        <button class="rpt-tab active" id="rtab-clockin" onclick="switchReportTab('clockin')">Clock-in data</button>
+        <button class="rpt-tab" id="rtab-leave" onclick="switchReportTab('leave')">Leave data</button>
+      </div>
+
+      <!-- Filters (shared) -->
+      <div class="rpt-filters">
+        <div class="rpt-filter-group">
+          <label class="rpt-filter-label">From</label>
+          <input type="date" class="rpt-filter-input" id="rpt-from">
+        </div>
+        <div class="rpt-filter-group">
+          <label class="rpt-filter-label">To</label>
+          <input type="date" class="rpt-filter-input" id="rpt-to">
+        </div>
+        <div class="rpt-filter-group">
+          <label class="rpt-filter-label">Department</label>
+          <select class="rpt-filter-input" id="rpt-department" onchange="onReportFilterChange()"></select>
+        </div>
+        <div class="rpt-filter-group">
+          <label class="rpt-filter-label">Reports to</label>
+          <select class="rpt-filter-input" id="rpt-manager" onchange="onReportFilterChange()"></select>
+        </div>
+        <div class="rpt-filter-group">
+          <label class="rpt-filter-label">Employee</label>
+          <select class="rpt-filter-input" id="rpt-employee" onchange="runReport()"></select>
+        </div>
+        <button class="btn btn-blue btn-sm" onclick="runReport()">Run</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportExcel()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Excel
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="exportPDF()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>PDF
+        </button>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="rpt-summary" id="rpt-summary"></div>
+
+      <!-- Clock-in tab content -->
+      <div id="rpt-clockin-content">
+        <div class="section-header"><div><div class="section-title" id="rpt-clockin-title">Clock-in detail</div><div class="section-sub" id="rpt-clockin-sub">Select a date range and run the report</div></div></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Employee</th><th>Date</th><th>Scheduled</th><th>Clock in</th><th>Clock out</th><th>Duration</th><th>Variance</th></tr></thead>
+          <tbody id="rpt-clockin-body"><tr><td colspan="7"><div class="empty-state"><p>Run the report to see results.</p></div></td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- Leave tab content -->
+      <div id="rpt-leave-content" style="display:none;">
+        <div class="section-header"><div><div class="section-title" id="rpt-leave-title">Leave detail</div><div class="section-sub" id="rpt-leave-sub">Select a date range and run the report</div></div></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Employee</th><th>Type</th><th>Start</th><th>End</th><th>Days</th><th>Status</th><th>Decision note</th></tr></thead>
+          <tbody id="rpt-leave-body"><tr><td colspan="7"><div class="empty-state"><p>Run the report to see results.</p></div></td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPANY SETTINGS PAGE (Admin only) -->
+    <div class="page" id="page-company">
+      <div style="max-width:600px;">
+        <div class="section-header" style="margin-bottom:20px;">
+          <div><div class="section-title">Company settings</div><div class="section-sub">Configure departments and other company-wide options</div></div>
+        </div>
+
+        <!-- Departments -->
+        <div class="table-wrap" style="padding:24px;margin-bottom:20px;">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px;">Departments</div>
+          <div style="font-size:13px;color:var(--text3);margin-bottom:16px;">These departments appear when creating or editing users.</div>
+          <div id="dept-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="form-input" type="text" id="new-dept-input" placeholder="New department name…" style="flex:1;padding:9px 12px;font-size:14px;" onkeydown="if(event.key==='Enter')addDepartment()">
+            <button class="btn btn-blue" onclick="addDepartment()">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-clockout">
+  <div class="modal">
+    <div class="modal-title">Clock out?</div>
+    <div class="modal-sub">Clocked in since <strong id="modal-clockin-time">—</strong>. This will record <strong id="modal-duration">—</strong> for today.</div>
+    <div class="modal-actions"><button class="btn-secondary" onclick="closeModal('modal-clockout')">Cancel</button><button class="btn-danger" onclick="confirmClockOut()">Clock out</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-new-leave">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-title">Request leave</div>
+    <div class="modal-sub">Submit a leave request for manager approval</div>
+    <div class="leave-warning" id="leave-warning"></div>
+    <div class="form-group">
+      <label class="form-label">Leave type</label>
+      <div class="leave-type-grid">
+        <button class="leave-type-btn selected" onclick="selectLeaveType(this,'Annual Leave')">🌴 Annual Leave</button>
+        <button class="leave-type-btn" onclick="selectLeaveType(this,'Sick Leave')">🤒 Sick Leave</button>
+        <button class="leave-type-btn" onclick="selectLeaveType(this,'Compassionate')">💙 Compassionate</button>
+        <button class="leave-type-btn" onclick="selectLeaveType(this,'Other')">📋 Other</button>
+      </div>
+      <input type="hidden" id="leave-type-value" value="Annual Leave">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label class="form-label">Start date</label><input class="form-input" type="date" id="leave-start" onchange="calcLeaveDays()"></div>
+      <div class="form-group"><label class="form-label">End date</label><input class="form-input" type="date" id="leave-end" onchange="calcLeaveDays()"></div>
+    </div>
+    <div id="leave-days-preview" style="font-size:13px;color:var(--text);margin-bottom:12px;min-height:20px;"></div>
+    <div class="form-group"><label class="form-label">Notes (optional)</label><textarea class="form-input" id="leave-notes" rows="2" placeholder="Any additional context…" style="resize:vertical;"></textarea></div>
+    <div class="modal-actions"><button class="btn-secondary" onclick="closeModal('modal-new-leave')">Cancel</button><button class="btn-confirm" onclick="submitLeaveRequest()">Submit request</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-approve">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-title" id="approve-modal-title">Review request</div>
+    <div class="approval-detail" id="approve-detail"></div>
+    <div class="form-group"><label class="form-label">Message to employee (optional)</label><textarea class="form-input" id="approve-message" rows="2" placeholder="Add a note…" style="resize:vertical;"></textarea></div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:4px;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">📧 Email preview</div>
+      <div id="email-preview-content" style="font-size:12px;color:var(--text2);line-height:1.6;"></div>
+    </div>
+    <div class="modal-actions"><button class="btn-secondary" onclick="closeModal('modal-approve')">Cancel</button><button class="btn-danger" onclick="decideLeave('declined')">Decline</button><button class="btn-confirm" onclick="decideLeave('approved')">Approve</button></div>
+  </div>
+</div>
+
+<!-- ADD / EDIT USER MODAL -->
+<div class="modal-overlay" id="modal-user-edit">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-title" id="user-edit-title">Add user</div>
+    <div class="modal-sub" id="user-edit-sub">Fill in the details for the new team member.</div>
+    <input type="hidden" id="edit-uid">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label class="form-label">First name</label><input class="form-input" type="text" id="edit-firstname" placeholder="First"></div>
+      <div class="form-group"><label class="form-label">Last name</label><input class="form-input" type="text" id="edit-lastname" placeholder="Last"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="edit-email" placeholder="name@company.com"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Department</label>
+        <select class="form-input" id="edit-dept"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select class="form-input" id="edit-role" onchange="onEditRoleChange()">
+          <option value="employee">Employee</option>
+          <option value="manager">Manager</option>
+          <option value="senior_manager">Senior Manager</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" id="edit-reports-to-group">
+      <label class="form-label">Reports to (manager)</label>
+      <select class="form-input" id="edit-manager-id"><option value="">— None —</option></select>
+    </div>
+    <div class="form-group" id="edit-manages-group" style="display:none;">
+      <label class="form-label">Oversees these managers</label>
+      <div id="edit-manages-list" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;padding:4px 0;"></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">Tick the managers whose teams this person oversees</div>
+    </div>
+    <div class="form-group" id="edit-password-group"><label class="form-label" id="edit-password-label">Password</label><input class="form-input" type="password" id="edit-password" placeholder="Set login password"></div>
+    <div class="modal-actions"><button class="btn-secondary" onclick="closeModal('modal-user-edit')">Cancel</button><button class="btn-confirm" onclick="saveUserEdit()">Save</button></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ======================================================
+//  FIREBASE CONFIG
+//  To connect real Firebase: replace the config below,
+//  set DEMO_MODE = false, and host the file on a server.
+// ======================================================
+const DEMO_MODE = true; // Set to false when connecting Firebase
+let app, auth, db;
+
+// Firebase stub functions (only used when DEMO_MODE = false)
+function initializeApp(cfg){ return {}; }
+function getAuth(a){ return {}; }
+function getFirestore(a){ return {}; }
+function signInWithEmailAndPassword(a,e,p){ return Promise.reject('Not configured'); }
+function fbSignOut(a){ return Promise.resolve(); }
+function onAuthStateChanged(a,cb){ /* no-op in demo */ }
+function doc(){ return {}; }
+function setDoc(){ return Promise.resolve(); }
+function getDoc(){ return Promise.resolve({exists:()=>false,data:()=>({})}); }
+function collection(){ return {}; }
+function addDoc(){ return Promise.resolve({id:'demo'}); }
+function query(){ return {}; }
+function where(){ return {}; }
+function getDocs(){ return Promise.resolve({docs:[]}); }
+function orderBy(){ return {}; }
+function updateDoc(){ return Promise.resolve(); }
+function Timestamp(){ return {}; }
+
+// ======================================================
+//  PERSISTENT STATE
+// ======================================================
+const STORAGE_KEY = 'wf_v13_state';
+function loadState()  { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); } catch { return null; } }
+function saveState()  { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); }
+
+const FRESH_STATE = { clockedIn:{}, timesheets:{}, leaveRequests:[], staffSettings:{}, userOverrides:{}, companySettings:{departments:['Finance','Operations','HR','Engineering','Sales','Design','Marketing','Management']} };
+let S = loadState() || JSON.parse(JSON.stringify(FRESH_STATE));
+// Ensure all keys present
+['clockedIn','timesheets','leaveRequests','staffSettings','userOverrides'].forEach(k=>{ if(!S[k]) S[k] = Array.isArray(FRESH_STATE[k]) ? [] : {}; });
+if (!S.companySettings) S.companySettings = { departments:['Finance','Operations','HR','Engineering','Sales','Design','Marketing','Management'] };
+if (!S.companySettings.departments) S.companySettings.departments = ['Finance','Operations','HR','Engineering','Sales','Design','Marketing','Management'];
+
+// ======================================================
+//  MASTER USER LIST (source of truth - overridden by S.userOverrides)
+// ======================================================
+const DEFAULT_WORK_DAYS = [1,2,3,4,5];
+const DEFAULT_SCHEDULE  = { 1:{start:'09:00',finish:'17:30'}, 2:{start:'09:00',finish:'17:30'}, 3:{start:'09:00',finish:'17:30'}, 4:{start:'09:00',finish:'17:30'}, 5:{start:'09:00',finish:'17:30'} };
+
+// Base user records - passwords stored in plain text for demo only
+// == BASE_USERS: all overridable via S.userOverrides ==
+// Real-world setup: Finance team (Josh/Rachel/Claire/Sarah   Dawn). Doreen is senior manager over Dawn.
+const BASE_USERS = [
+  { uid:'u1', email:'josh@workforce.demo',     password:'demo1234', name:'Josh Underwood', role:'employee',       managerId:'u2',  department:'Finance',     leaveEntitlement:25, createdAt:'2024-01-15', active:true, workDays:[1,2,3,4,5], hoursPerDay:7.5, daySchedule:{...DEFAULT_SCHEDULE} },
+  { uid:'u2', email:'dawn@workforce.demo',     password:'demo1234', name:'Dawn Davies',    role:'manager',        managerId:'u7',  department:'Finance',     leaveEntitlement:25, createdAt:'2023-06-01', active:true, workDays:[1,2,3,4,5], hoursPerDay:7.5, daySchedule:{...DEFAULT_SCHEDULE} },
+  { uid:'u3', email:'admin@workforce.demo',    password:'demo1234', name:'Admin User',     role:'admin',          managerId:null,  department:'HR',          leaveEntitlement:25, createdAt:'2023-01-01', active:true, workDays:[1,2,3,4,5], hoursPerDay:7.5, daySchedule:{...DEFAULT_SCHEDULE} },
+  { uid:'u4', email:'rachel@workforce.demo',   password:'demo1234', name:'Rachel Kibble',  role:'employee',       managerId:'u2',  department:'Finance',     leaveEntitlement:25, createdAt:'2024-03-01', active:true, workDays:[1,2,3,4,5], hoursPerDay:7.5, daySchedule:{...DEFAULT_SCHEDULE} },
+  { uid:'u5', email:'claire@workforce.demo',   password:'demo1234', name:'Claire Puffett', role:'employee',       managerId:'u2',  department:'Finance',     leaveEntitlement:20, createdAt:'2024-03-01', active:true, workDays:[1,2,3,4],   hoursPerDay:8.0, daySchedule:{ 1:{start:'08:00',finish:'17:00'}, 2:{start:'08:00',finish:'17:00'}, 3:{start:'08:00',finish:'17:00'}, 4:{start:'08:00',finish:'17:00'} } },
+  { uid:'u6', email:'sarah.r@workforce.demo',  password:'demo1234', name:'Sarah Rushbury', role:'employee',       managerId:'u2',  department:'Finance',     leaveEntitlement:28, createdAt:'2024-03-01', active:true, workDays:[1,2,3,4,5], hoursPerDay:6.0, daySchedule:{...DEFAULT_SCHEDULE} },
+  { uid:'u7', email:'doreen@workforce.demo',   password:'demo1234', name:'Doreen Heath',   role:'senior_manager', managerId:null,  department:'Operations',  leaveEntitlement:30, createdAt:'2022-09-01', active:true, workDays:[1,2,3,4,5], hoursPerDay:7.5, daySchedule:{...DEFAULT_SCHEDULE} },
+];
+
+// Returns merged user record (base + any saved overrides)
+function getUser(uid) {
+  const base = BASE_USERS.find(u=>u.uid===uid);
+  if (!base) return null;
+  const ov = S.userOverrides[uid] || {};
+  return { ...base, ...ov };
+}
+
+// Returns all active users, with overrides applied
+function getAllUsers() {
+  return BASE_USERS.map(b => getUser(b.uid));
+}
+
+function getActiveTeam() {
+  return getAllUsers().filter(u => u.active !== false);
+}
+
+// == TEAM VISIBILITY & LEAVE APPROVAL ==
+// Both functions now use managerId exclusively - department is for display only.
+// A user sees/approves only those who directly report to them (managerId === uid).
+// For senior managers this means the managers who report to them.
+// Admin sees and approves everyone.
+// This is fully dynamic: changing managerId in User Management takes effect immediately.
+function getManagedTeam(uid) {
+  const u = getUser(uid);
+  if (!u) return [];
+  if (u.role === 'admin') return getActiveTeam().filter(x => x.uid !== uid);
+  // Everyone whose managerId points to this user
+  return getActiveTeam().filter(x => x.managerId === uid);
+}
+
+function getLeaveApprovalTeam(uid) {
+  // Same logic as getManagedTeam - approval scope matches visibility scope
+  return getManagedTeam(uid);
+}
+
+// Look up user by email (with overrides)
+function getUserByEmail(email) {
+  const base = BASE_USERS.find(u => {
+    const ov = S.userOverrides[u.uid] || {};
+    return (ov.email || u.email) === email;
+  });
+  return base ? getUser(base.uid) : null;
+}
+
+// Effective staff settings - merges staffSettings overrides on top of user defaults
+function getStaffSettings(uid) {
+  const u    = getUser(uid) || {};
+  const saved = S.staffSettings[uid] || {};
+  return {
+    leaveEntitlement: saved.leaveEntitlement ?? u.leaveEntitlement ?? 25,
+    hoursPerDay:      saved.hoursPerDay      ?? u.hoursPerDay      ?? 7.5,
+    workDays:         saved.workDays         ?? u.workDays         ?? DEFAULT_WORK_DAYS,
+    daySchedule:      saved.daySchedule      ?? u.daySchedule      ?? DEFAULT_SCHEDULE,
+  };
+}
+
+// ======================================================
+//  APP STATE
+// ======================================================
+let currentUser     = null;
+let currentUserData = null;
+let clockInTime     = null;
+let clockElapsedInterval = null;
+let liveClockInterval    = null;
+let pendingLeaveId  = null;
+
+// ======================================================
+//  AUTH
+// ======================================================
+window.fillDemo = (email, pass) => {
+  document.getElementById('auth-email').value = email;
+  document.getElementById('auth-password').value = pass;
+};
+
+window.signIn = async () => {
+  const email = document.getElementById('auth-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('auth-password').value;
+  const btn   = document.getElementById('btn-signin');
+  const err   = document.getElementById('auth-error');
+  err.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Signing in ';
+
+  if (DEMO_MODE) {
+    const u = getUserByEmail(email);
+    const pw = (S.userOverrides[u?.uid]?.password) || u?.password;
+    if (u && pw === pass && u.active !== false) {
+      currentUserData = u;
+      currentUser     = { uid: u.uid, email };
+      const sess = S.clockedIn[u.uid];
+      clockInTime = sess ? new Date(sess.clockInTime) : null;
+      showApp();
+    } else {
+      err.textContent = u && u.active === false ? 'This account is inactive.' : 'Invalid email or password.';
+      err.style.display = 'block';
+    }
+    btn.disabled = false; btn.textContent = 'Sign in';
+    return;
+  }
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) {
+    err.textContent = e.code === 'auth/invalid-credential' ? 'Invalid email or password.' : e.message;
+    err.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+};
+
+window.signOut = async () => {
+  stopAllIntervals();
+  if (!DEMO_MODE) await fbSignOut(auth);
+  currentUser = null; currentUserData = null; clockInTime = null;
+  document.getElementById('app-shell').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('auth-email').value = '';
+  document.getElementById('auth-password').value = '';
+};
+
+if (!DEMO_MODE) {
+  onAuthStateChanged(auth, async user => {
+    if (user) {
+      currentUser = user;
+      const snap = await getDoc(doc(db,'users',user.uid));
+      currentUserData = snap.exists() ? snap.data() : { uid:user.uid, name:user.email, email:user.email, role:'employee', department:'General', leaveEntitlement:25, createdAt:new Date().toISOString().split('T')[0], active:true };
+      if (!snap.exists()) await setDoc(doc(db,'users',user.uid), currentUserData);
+      const sessSnap = await getDoc(doc(db,'sessions',user.uid));
+      clockInTime = sessSnap.exists() ? (sessSnap.data().clockInTime?.toDate() || null) : null;
+      showApp();
+    } else {
+      document.getElementById('app-loading').style.display = 'none';
+      document.getElementById('auth-screen').style.display = 'flex';
+    }
+  });
+} else {
+  document.getElementById('app-loading').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+
+// ======================================================
+//  APP INIT
+// ======================================================
+function showApp() {
+  document.getElementById('app-loading').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'block';
+  const u   = currentUserData;
+  const col = roleColor(u.role);
+  document.getElementById('sidebar-avatar').textContent = initials(u.name);
+  document.getElementById('sidebar-avatar').style.background = col+'22';
+  document.getElementById('sidebar-avatar').style.color = col;
+  document.getElementById('sidebar-name').textContent = u.name;
+  document.getElementById('sidebar-role').textContent  = cap(u.role);
+  buildNav(u.role);
+  startLiveClock();
+  navigateTo((u.role==='admin') ? 'team' : 'clock');
+}
+
+// ======================================================
+//  NAVIGATION
+// ======================================================
+const NAV = {
+  employee: [
+    { page:'clock',    label:'Clock in / out',  icon:iClock() },
+    { page:'leave',    label:'My leave',         icon:iCal() },
+    { page:'calendar', label:'Team calendar',    icon:iCalendar() },
+    { page:'profile',  label:'My profile',       icon:iPerson() },
+  ],
+  manager: [
+    { page:'clock',     label:'Clock in / out',  icon:iClock() },
+    { page:'leave',     label:'My leave',         icon:iCal() },
+    { page:'calendar',  label:'Team calendar',    icon:iCalendar() },
+    { page:'team',      label:'Team overview',    icon:iTeam() },
+    { page:'approvals', label:'Leave approvals',  icon:iCheck(), badge:'pending' },
+    { page:'reporting', label:'Reporting',         icon:iReport() },
+    { page:'profile',   label:'My profile',        icon:iPerson() },
+  ],
+  senior_manager: [
+    { page:'clock',     label:'Clock in / out',  icon:iClock() },
+    { page:'leave',     label:'My leave',         icon:iCal() },
+    { page:'calendar',  label:'Team calendar',    icon:iCalendar() },
+    { page:'team',      label:'Team overview',    icon:iTeam() },
+    { page:'approvals', label:'Leave approvals',  icon:iCheck(), badge:'pending' },
+    { page:'reporting', label:'Reporting',         icon:iReport() },
+    { page:'profile',   label:'My profile',        icon:iPerson() },
+  ],
+  admin: [
+    { page:'team',      label:'Team overview',    icon:iTeam() },
+    { page:'approvals', label:'Leave approvals',  icon:iCheck(), badge:'pending' },
+    { page:'calendar',  label:'Team calendar',    icon:iCalendar() },
+    { page:'reporting', label:'Reporting',         icon:iReport() },
+    { page:'settings',  label:'Staff settings',   icon:iSettings() },
+    { page:'company',   label:'Company settings', icon:iCompany() },
+    { page:'profile',   label:'My profile',        icon:iPerson() },
+  ],
+};
+
+function buildNav(role) {
+  const nav = document.getElementById('sidebar-nav');
+  nav.innerHTML = '';
+  (NAV[role]||NAV.employee).forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-item';
+    btn.dataset.page = item.page;
+    const n = item.badge === 'pending' ? getPendingCount() : 0;
+    btn.innerHTML = `${item.icon}<span>${item.label}</span>${n>0?`<span class="nav-badge">${n}</span>`:''}`;
+    btn.onclick = () => navigateTo(item.page);
+    nav.appendChild(btn);
+  });
+}
+
+function getPendingCount() {
+  const approvalTeam = getLeaveApprovalTeam(currentUser.uid).map(u=>u.uid);
+  return (S.leaveRequests||[]).filter(r=>r.status==='pending'&&approvalTeam.includes(r.userId)).length;
+}
+
+const PAGE_TITLES = { clock:'Clock in / out', leave:'My leave', team:'Team overview', approvals:'Leave approvals', calendar:'Team calendar', reporting:'Reporting', settings:'Staff settings', company:'Company settings', profile:'My profile' };
+
+window.navigateTo = page => {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===page));
+  const el = document.getElementById('page-'+page);
+  if (el) el.classList.add('active');
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[page]||page;
+  if (page==='clock')     loadClockPage();
+  if (page==='leave')     loadLeavePage();
+  if (page==='team')      loadTeamPage();
+  if (page==='approvals') loadApprovalsPage();
+  if (page==='calendar')  loadCalendarPage();
+  if (page==='reporting') loadReportingPage();
+  if (page==='settings')  loadSettingsPage();
+  if (page==='company')   loadCompanyPage();
+  if (page==='profile')   loadProfilePage();
+};
+
+// ======================================================
+//  LIVE CLOCK
+// ======================================================
+function startLiveClock() {
+  const el = document.getElementById('topbar-time');
+  const upd = () => el.textContent = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  upd(); liveClockInterval = setInterval(upd, 1000);
+}
+
+// ======================================================
+//  CLOCK PAGE
+// ======================================================
+async function loadClockPage() {
+  document.getElementById('clock-date-display').textContent = new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  updateClockDisplay();
+  loadTimesheetData();
+  loadStats();
+}
+
+function updateClockDisplay() {
+  const indicator = document.getElementById('clock-indicator');
+  const btn       = document.getElementById('btn-clock');
+  const statusTxt = document.getElementById('clock-status-text');
+  const elapsed   = document.getElementById('clock-elapsed');
+  if (clockInTime) {
+    indicator.classList.add('clocked-in');
+    btn.className = 'btn-clock btn-clock-out'; btn.textContent = 'Clock Out';
+    statusTxt.textContent = `Clocked in since ${clockInTime.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`;
+    startElapsedTimer();
+  } else {
+    indicator.classList.remove('clocked-in');
+    btn.className = 'btn-clock btn-clock-in'; btn.textContent = 'Clock In';
+    statusTxt.textContent = 'You are not currently clocked in';
+    elapsed.textContent = 'Not clocked in'; elapsed.classList.remove('active');
+    stopElapsedTimer();
+  }
+}
+
+function startElapsedTimer() {
+  stopElapsedTimer();
+  const el = document.getElementById('clock-elapsed');
+  if (!el) return;
+  el.classList.add('active');
+  const upd = () => {
+    if (!clockInTime) return;
+    const s = Math.floor((Date.now()-clockInTime.getTime())/1000);
+    el.textContent = `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)} elapsed`;
+  };
+  upd(); clockElapsedInterval = setInterval(upd, 1000);
+}
+function stopElapsedTimer() { if (clockElapsedInterval) { clearInterval(clockElapsedInterval); clockElapsedInterval = null; } }
+
+window.toggleClock = () => {
+  if (!clockInTime) {
+    clockInTime = new Date();
+    S.clockedIn[currentUser.uid] = { clockInTime: clockInTime.toISOString() };
+    if (!S.timesheets[currentUser.uid]) S.timesheets[currentUser.uid] = [];
+    S.timesheets[currentUser.uid].unshift({ id:'ts'+Date.now(), userId:currentUser.uid, userName:currentUserData.name, date:toDateStr(clockInTime), clockIn:clockInTime.getTime(), clockOut:null, duration:null });
+    saveState();
+    updateClockDisplay();
+    showToast('Clocked in at '+clockInTime.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}), 'green');
+  } else {
+    const dur = formatDuration(clockInTime, new Date());
+    document.getElementById('modal-clockin-time').textContent = clockInTime.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('modal-duration').textContent = dur;
+    openModal('modal-clockout');
+  }
+};
+
+window.confirmClockOut = () => {
+  closeModal('modal-clockout');
+  const outTime = new Date();
+  const durMins = Math.floor((outTime-clockInTime)/60000);
+  const sheets  = S.timesheets[currentUser.uid]||[];
+  const idx     = sheets.findIndex(e=>e.date===toDateStr(clockInTime)&&!e.clockOut);
+  if (idx>=0) { sheets[idx].clockOut=outTime.getTime(); sheets[idx].duration=durMins; }
+  else sheets.unshift({ id:'ts'+Date.now(), userId:currentUser.uid, userName:currentUserData.name, date:toDateStr(outTime), clockIn:clockInTime.getTime(), clockOut:outTime.getTime(), duration:durMins });
+  delete S.clockedIn[currentUser.uid];
+  saveState();
+  showToast(`Clocked out * ${formatDuration(clockInTime,outTime)} logged`, 'red');
+  clockInTime = null;
+  updateClockDisplay();
+  loadTimesheetData();
+  loadStats();
+};
+
+function loadTimesheetData() {
+  const tbody  = document.getElementById('timesheet-body');
+  const entries = (S.timesheets[currentUser.uid]||[]).slice(0,7);
+  if (!entries.length) { tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><p>No entries yet. Clock in to get started.</p></div></td></tr>`; return; }
+  const settings = getStaffSettings(currentUser.uid);
+  tbody.innerHTML = entries.map(e => {
+    const inT  = new Date(e.clockIn);
+    const outT = e.clockOut ? new Date(e.clockOut) : null;
+    const dur  = e.duration;
+    const isActive = !outT && !!S.clockedIn[currentUser.uid];
+    const sched = settings.daySchedule?.[inT.getDay()];
+    const schedCell = sched ? `<span style="font-family:var(--mono);font-size:12px;">${sched.start}-${sched.finish}</span>` : '-';
+    const variance  = buildVariance(inT, outT, sched, isActive);
+    return `<tr>
+      <td class="td-primary">${inT.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</td>
+      <td>${schedCell}</td>
+      <td class="td-mono">${inT.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</td>
+      <td class="td-mono">${outT?outT.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):isActive?'<span style="color:var(--green);font-size:12px;">Active</span>':'-'}</td>
+      <td class="td-mono">${dur!=null?fmtHM(dur):'-'}</td>
+      <td>${variance}</td>
+    </tr>`;
+  }).join('');
+}
+
+function fmtVariance(mins) {
+  const h=Math.floor(Math.abs(mins)/60), m=Math.abs(mins)%60;
+  if(h===0) return `${m}m`;
+  return m>0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+function buildVariance(inT, outT, sched, isActive) {
+  if (!sched) return '<span style="color:var(--text3);font-size:12px;">-</span>';
+  const [ss,sm] = sched.start.split(':').map(Number);
+  const [fs,fm] = sched.finish.split(':').map(Number);
+  const late  = (inT.getHours()*60+inT.getMinutes()) - (ss*60+sm);
+  const parts = [];
+  if (late > 2) parts.push(`<span style="color:var(--amber);font-size:12px;font-family:var(--mono);">+${fmtVariance(late)} late</span>`);
+  if (outT) {
+    const early = (fs*60+fm) - (outT.getHours()*60+outT.getMinutes());
+    if (early > 2) parts.push(`<span style="color:var(--amber);font-size:12px;font-family:var(--mono);">-${fmtVariance(early)} early</span>`);
+  }
+  if (!parts.length && (outT||isActive)) return `<span style="color:var(--green);font-size:12px;">On time</span>`;
+  return parts.length ? parts.join(' ') : '<span style="color:var(--text3);font-size:12px;">-</span>';
+}
+
+function loadStats() {
+  const now = new Date(), todayStr = toDateStr(now);
+  const weekStart = new Date(now); weekStart.setDate(now.getDate()-now.getDay()+1);
+  let todayMins=0, weekMins=0;
+  if (clockInTime) { const a=Math.floor((Date.now()-clockInTime.getTime())/60000); todayMins+=a; weekMins+=a; }
+  (S.timesheets[currentUser.uid]||[]).forEach(e => {
+    if (!e.duration) return;
+    if (e.date===todayStr) todayMins+=e.duration;
+    if (new Date(e.clockIn) >= weekStart) weekMins+=e.duration;
+  });
+  document.getElementById('stat-today').textContent = fmtHM(todayMins);
+  document.getElementById('stat-week').textContent  = fmtHM(weekMins);
+  const settings = getStaffSettings(currentUser.uid);
+  const sched    = settings.daySchedule?.[now.getDay()];
+  const schedEl  = document.getElementById('stat-scheduled');
+  const schedSub = document.getElementById('stat-scheduled-sub');
+  if (sched && settings.workDays.includes(now.getDay())) {
+    schedEl.textContent = settings.hoursPerDay+'h';
+    schedSub.textContent = sched.start+' - '+sched.finish;
+    schedEl.style.color = '';
+  } else {
+    schedEl.textContent = 'Day off'; schedSub.textContent = 'Not scheduled today'; schedEl.style.color='var(--text3)';
+  }
+}
+
+// ======================================================
+//  TEAM PAGE
+// ======================================================
+function loadTeamPage() {
+  const COLORS = ['#4f8ef7','#34c97a','#f5a623','#f75c5c','#a78bfa','#38bdf8','#fb923c'];
+  const team   = getManagedTeam(currentUser.uid);
+  const today  = toDateStr(new Date());
+  let clockedInCount = 0;
+
+  document.getElementById('team-grid').innerHTML = team.map((m,i) => {
+    const col  = COLORS[i%COLORS.length];
+    const isIn = !!S.clockedIn[m.uid];
+    if (isIn) clockedInCount++;
+    return `<div class="team-card">
+      <div class="team-avatar" style="background:${col}22;color:${col};">${initials(m.name)}</div>
+      <div class="team-info"><div class="team-name">${m.name}</div><div class="team-detail">${m.department} * ${cap(m.role)}</div></div>
+      <span class="pill ${isIn?'pill-green':'pill-gray'}">${isIn?'Clocked in':'Not in'}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('mgr-clocked-in').textContent = clockedInCount;
+  document.getElementById('mgr-absent').textContent     = team.length - clockedInCount;
+  document.getElementById('mgr-team-size').textContent  = team.length;
+
+  // Group ALL entries across all days, sorted newest first
+  const allEntries = [];
+  team.forEach(m => {
+    (S.timesheets[m.uid]||[]).forEach(e => allEntries.push({...e, memberName:m.name, memberUid:m.uid}));
+  });
+
+  const logEl = document.getElementById('team-timesheet-body');
+  if (!allEntries.length) {
+    logEl.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>No clock-in activity recorded yet.</p></div></td></tr>`;
+    return;
+  }
+
+  // Group by date
+  const byDate = {};
+  allEntries.forEach(e => { if(!byDate[e.date]) byDate[e.date]=[]; byDate[e.date].push(e); });
+  const sortedDates = Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
+
+  // Render as grouped rows with date headers
+  logEl.innerHTML = sortedDates.map(date => {
+    const isToday = date === today;
+    const dayLabel = new Date(date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const headerRow = `<tr><td colspan="6" style="background:${isToday?'var(--accent-dim)':'var(--surface2)'};padding:8px 16px;font-size:12px;font-weight:600;color:${isToday?'var(--accent)':'var(--text2)'};border-bottom:1px solid var(--border);">${isToday?'<span style="text-transform:uppercase;font-size:10px;letter-spacing:.08em;margin-right:8px;">Today</span>':''}${dayLabel}</td></tr>`;
+    const rows = byDate[date].map(e => {
+      const inT  = new Date(e.clockIn);
+      const outT = e.clockOut ? new Date(e.clockOut) : null;
+      const uid  = e.userId || e.memberUid;
+      const isAct = !!S.clockedIn[uid];
+      const sched = getStaffSettings(uid).daySchedule?.[inT.getDay()];
+      const schedC = sched ? `<span style="font-family:var(--mono);font-size:12px;">${sched.start}-${sched.finish}</span>` : '-';
+      return `<tr>
+        <td class="td-primary">${e.memberName}</td>
+        <td>${schedC}</td>
+        <td class="td-mono">${inT.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</td>
+        <td class="td-mono">${outT?outT.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):isAct?'<span style="color:var(--green);font-size:12px;">Active</span>':'-'}</td>
+        <td class="td-mono">${e.duration?fmtHM(e.duration):isAct?'<span style="color:var(--text3);font-size:12px;">In progress</span>':'-'}</td>
+        <td>${buildVariance(inT,outT,sched,isAct)}</td>
+      </tr>`;
+    }).join('');
+    return headerRow + rows;
+  }).join('');
+}
+
+// ======================================================
+//  LEAVE PAGE
+// ======================================================
+function loadLeavePage() {
+  const uid      = currentUser.uid;
+  const settings = getStaffSettings(uid);
+  const entitle  = settings.leaveEntitlement;
+  const used     = getUsedLeaveDays(uid);
+  const pending  = (S.leaveRequests||[]).filter(r=>r.userId===uid&&r.status==='pending'&&r.type==='Annual Leave').reduce((s,r)=>s+r.days,0);
+  const remaining = entitle - used - pending;
+  const myReqs   = (S.leaveRequests||[]).filter(r=>r.userId===uid);
+  const pendingCount = myReqs.filter(r=>r.status==='pending').length;
+  const DAY_NAMES = {0:'Sun',1:'Mon',2:'Tue',3:'Wed',4:'Thu',5:'Fri',6:'Sat'};
+  const patternStr = settings.workDays.map(d=>DAY_NAMES[d]).join(', ');
+
+  document.getElementById('leave-balance-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Entitlement</div><div class="stat-value stat-blue">${entitle}</div><div class="stat-sub">days per year</div></div>
+    <div class="stat-card"><div class="stat-label">Used</div><div class="stat-value stat-amber">${used}</div><div class="stat-sub">days approved</div></div>
+    <div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value ${remaining<5?'stat-red':'stat-green'}">${remaining}</div><div class="stat-sub">days available</div></div>
+    <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value stat-purple">${pendingCount}</div><div class="stat-sub">awaiting decision</div></div>
+  `;
+  const infoEl = document.getElementById('leave-pattern-info');
+  if (infoEl) infoEl.textContent = `Your working pattern: ${patternStr} * ${settings.hoursPerDay}h/day`;
+
+  const tbody = document.getElementById('my-leave-body');
+  if (!myReqs.length) { tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><p>No requests yet. Click "Request leave" to get started.</p></div></td></tr>`; return; }
+  tbody.innerHTML = myReqs.sort((a,b)=>b.submittedAt.localeCompare(a.submittedAt)).map(r=>{
+    const pm = {pending:'pill-amber',approved:'pill-green',declined:'pill-red'};
+    const dr = r.startDate===r.endDate ? formatDate(r.startDate) : `${formatDate(r.startDate)} - ${formatDate(r.endDate)}`;
+    return `<tr><td class="td-primary">${r.type}</td><td>${dr}</td><td class="td-mono">${r.days}</td><td class="td-mono">${formatDate(r.submittedAt.split('T')[0])}</td><td><span class="pill ${pm[r.status]||'pill-gray'}">${cap(r.status)}</span></td><td style="font-size:12px;color:var(--text3);">${r.decisionNote||r.notes||'-'}</td></tr>`;
+  }).join('');
+}
+
+window.selectLeaveType = (btn, type) => {
+  document.querySelectorAll('.leave-type-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('leave-type-value').value = type;
+  calcLeaveDays();
+};
+
+window.calcLeaveDays = () => {
+  const s    = document.getElementById('leave-start').value;
+  const e    = document.getElementById('leave-end').value;
+  const type = document.getElementById('leave-type-value').value;
+  const prev = document.getElementById('leave-days-preview');
+  const warn = document.getElementById('leave-warning');
+  warn.style.display = 'none';
+  if (!s||!e) { prev.textContent=''; return; }
+  if (new Date(e+'T12:00:00') < new Date(s+'T12:00:00')) { prev.textContent='  End date must be after start date'; prev.style.color='var(--red)'; return; }
+  const days = countWorkDays(s, e, currentUser.uid);
+  const settings = getStaffSettings(currentUser.uid);
+  const DAY_NAMES = {0:'Sun',1:'Mon',2:'Tue',3:'Wed',4:'Thu',5:'Fri',6:'Sat'};
+  prev.innerHTML = `${days} working day${days!==1?'s':''} <span style="color:var(--text3);font-size:11px;">(pattern: ${settings.workDays.map(d=>DAY_NAMES[d]).join(', ')})</span>`;
+  prev.style.color = 'var(--text)';
+  if (type==='Annual Leave') {
+    const used = getUsedLeaveDays(currentUser.uid);
+    const pend = (S.leaveRequests||[]).filter(r=>r.userId===currentUser.uid&&r.status==='pending'&&r.type==='Annual Leave').reduce((s,r)=>s+r.days,0);
+    const rem  = settings.leaveEntitlement - used - pend;
+    if (days > rem) { warn.textContent=`  This uses ${days} day${days!==1?'s':''} but only ${rem} remaining (${settings.leaveEntitlement} entitlement   ${used} used   ${pend} pending).`; warn.style.display='block'; }
+  }
+};
+
+// Check if a date range overlaps any existing non-declined request for a user
+function hasOverlappingRequest(uid, startStr, endStr, excludeId) {
+  return (S.leaveRequests||[]).some(r => {
+    if (r.userId !== uid) return false;
+    if (r.status === 'declined') return false;
+    if (excludeId && r.id === excludeId) return false;
+    return startStr <= r.endDate && endStr >= r.startDate;
+  });
+}
+
+window.submitLeaveRequest = () => {
+  const type  = document.getElementById('leave-type-value').value;
+  const start = document.getElementById('leave-start').value;
+  const end   = document.getElementById('leave-end').value;
+  const notes = document.getElementById('leave-notes').value.trim();
+  if (!start||!end) { showToast('Please select dates','amber'); return; }
+  if (new Date(end+'T12:00:00') < new Date(start+'T12:00:00')) { showToast('End must be after start','amber'); return; }
+  const days = countWorkDays(start, end, currentUser.uid);
+  if (days === 0) { showToast('No working days in that range','amber'); return; }
+  // Block overlapping/duplicate requests
+  if (hasOverlappingRequest(currentUser.uid, start, end, null)) {
+    showToast('You already have a leave request covering those dates','red');
+    return;
+  }
+  if (type === 'Annual Leave') {
+    const s2 = getStaffSettings(currentUser.uid), used = getUsedLeaveDays(currentUser.uid);
+    const pend = (S.leaveRequests||[]).filter(r=>r.userId===currentUser.uid&&r.status==='pending'&&r.type==='Annual Leave').reduce((a,r)=>a+r.days,0);
+    if (days > s2.leaveEntitlement-used-pend) { showToast(`Exceeds allowance - only ${s2.leaveEntitlement-used-pend} days left`,'red'); return; }
+  }
+  S.leaveRequests.unshift({id:'lr'+Date.now(), userId:currentUser.uid, userName:currentUserData.name, userEmail:currentUserData.email, department:currentUserData.department, managerId:currentUserData.managerId, type, startDate:start, endDate:end, days, notes, status:'pending', submittedAt:new Date().toISOString(), decidedAt:null, decisionNote:''});
+  saveState();
+  closeModal('modal-new-leave');
+  ['leave-start','leave-end','leave-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('leave-days-preview').textContent = '';
+  document.getElementById('leave-warning').style.display = 'none';
+  showToast(`Leave request submitted - ${days} day${days!==1?'s':''}`, 'blue');
+  loadLeavePage();
+  buildNav(currentUserData.role);
+};
+
+// ======================================================
+//  APPROVALS
+// ======================================================
+function loadApprovalsPage() {
+  // Only show leave requests this user is responsible for approving
+  const approvalTeam = getLeaveApprovalTeam(currentUser.uid).map(u=>u.uid);
+  const all = (S.leaveRequests||[]).filter(r => approvalTeam.includes(r.userId));
+  const pending = all.filter(r=>r.status==='pending');
+  const today   = toDateStr(new Date());
+  document.getElementById('appr-pending-count').textContent  = pending.length;
+  document.getElementById('appr-approved-count').textContent = all.filter(r=>r.status==='approved').length;
+  document.getElementById('appr-onleave-count').textContent  = all.filter(r=>r.status==='approved'&&r.startDate<=today&&r.endDate>=today).length;
+
+  const list = document.getElementById('approvals-pending-list');
+  if (!pending.length) { list.innerHTML=`<div class="table-wrap"><div class="empty-state"><p>No pending requests - all clear!</p></div></div>`; }
+  else list.innerHTML = pending.map(r=>{
+    const dr = r.startDate===r.endDate ? formatDate(r.startDate) : `${formatDate(r.startDate)} - ${formatDate(r.endDate)}`;
+    return `<div class="request-card">
+      <div class="request-card-header">
+        <div><div class="request-card-title">${r.userName} <span style="font-weight:400;color:var(--text3);">* ${r.department}</span></div>
+        <div class="request-card-meta">${r.type} * ${dr} * ${r.days} day${r.days!==1?'s':''}</div></div>
+        <span class="pill pill-amber">Pending</span>
+      </div>
+      ${r.notes?`<div class="request-card-body">"${r.notes}"</div>`:''}
+      <div class="request-card-actions">
+        <button class="btn btn-green" onclick="openApprovalModal('${r.id}')">  Approve</button>
+        <button class="btn btn-red"   onclick="openApprovalModal('${r.id}','decline')">  Decline</button>
+      </div></div>`;
+  }).join('');
+
+  const history = all.filter(r=>r.status!=='pending').sort((a,b)=>(b.decidedAt||'').localeCompare(a.decidedAt||''));
+  const tbody   = document.getElementById('approvals-history-body');
+  if (!history.length) { tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><p>No decisions yet</p></div></td></tr>`; return; }
+  tbody.innerHTML = history.map(r=>{
+    const dr = r.startDate===r.endDate?formatDate(r.startDate):`${formatDate(r.startDate)} - ${formatDate(r.endDate)}`;
+    return `<tr><td class="td-primary">${r.userName}</td><td>${r.type}</td><td>${dr}</td><td class="td-mono">${r.days}</td>
+      <td><span class="pill ${r.status==='approved'?'pill-green':'pill-red'}">${cap(r.status)}</span></td>
+      <td class="td-mono">${r.decidedAt?formatDate(r.decidedAt.split('T')[0]):'-'}</td></tr>`;
+  }).join('');
+}
+
+window.openApprovalModal = (id, hint) => {
+  const r = (S.leaveRequests||[]).find(x=>x.id===id);
+  if (!r) return;
+  pendingLeaveId = id;
+  const dr = r.startDate===r.endDate?formatDate(r.startDate):`${formatDate(r.startDate)} - ${formatDate(r.endDate)}`;
+  document.getElementById('approve-modal-title').textContent = `Review: ${r.userName}'s ${r.type}`;
+  document.getElementById('approve-detail').innerHTML = `
+    <div class="approval-detail-row"><span class="approval-detail-label">Employee</span><span class="approval-detail-value">${r.userName}</span></div>
+    <div class="approval-detail-row"><span class="approval-detail-label">Type</span><span class="approval-detail-value">${r.type}</span></div>
+    <div class="approval-detail-row"><span class="approval-detail-label">Dates</span><span class="approval-detail-value">${dr}</span></div>
+    <div class="approval-detail-row"><span class="approval-detail-label">Duration</span><span class="approval-detail-value">${r.days} day${r.days!==1?'s':''}</span></div>
+    ${r.notes?`<div class="approval-detail-row"><span class="approval-detail-label">Notes</span><span class="approval-detail-value">"${r.notes}"</span></div>`:''}`;
+  document.getElementById('approve-message').value = '';
+  updateEmailPreview(r,'');
+  document.getElementById('approve-message').oninput = function(){ updateEmailPreview(r, this.value); };
+  openModal('modal-approve');
+};
+
+function updateEmailPreview(r, note) {
+  const dr = r.startDate===r.endDate?formatDate(r.startDate):`${formatDate(r.startDate)} - ${formatDate(r.endDate)}`;
+  document.getElementById('email-preview-content').innerHTML = `
+    <p><strong>To:</strong> ${r.userEmail}</p><p><strong>Subject:</strong> Leave request update - ${r.type}</p>
+    <hr style="border:none;border-top:1px solid #333;margin:8px 0;">
+    <p>Hi ${r.userName.split(' ')[0]},</p>
+    <p>Your ${r.type} request for <strong>${dr}</strong> (${r.days} day${r.days!==1?'s':''}) has been reviewed.</p>
+    ${note?`<p style="font-style:italic;">"${note}"</p>`:''}
+    <p style="color:var(--text3);font-size:11px;">WorkForce Portal automated notification.</p>`;
+}
+
+window.decideLeave = decision => {
+  const r = (S.leaveRequests||[]).find(x=>x.id===pendingLeaveId);
+  if (!r) return;
+  r.status = decision; r.decidedAt = new Date().toISOString(); r.decisionNote = document.getElementById('approve-message').value.trim();
+  saveState();
+  closeModal('modal-approve');
+  showToast(`${cap(decision)} * Email sent to ${r.userName}`, decision==='approved'?'green':'red');
+  loadApprovalsPage(); buildNav(currentUserData.role);
+};
+
+// ======================================================
+//  STAFF SETTINGS
+// ======================================================
+window.switchSettingsTab = tab => {
+  ['workpatterns','users'].forEach(t => {
+    document.getElementById('settings-tab-'+t).style.display = t===tab ? 'block' : 'none';
+    const btn = document.getElementById('stab-'+t);
+    if (t===tab) { btn.classList.add('active'); btn.style.borderBottom='2px solid var(--accent)'; }
+    else { btn.classList.remove('active'); btn.style.borderBottom=''; }
+  });
+  if (tab==='users') loadUserMgmt();
+};
+
+function loadSettingsPage() {
+  switchSettingsTab('workpatterns');
+  loadWorkPatterns();
+}
+
+function loadWorkPatterns() {
+  const DAY_LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const DAY_JS     = [1,    2,    3,    4,    5,    6,    0   ];
+  const DAY_NAMES  = {0:'Sun',1:'Mon',2:'Tue',3:'Wed',4:'Thu',5:'Fri',6:'Sat'};
+  const list = document.getElementById('settings-employee-list');
+
+  list.innerHTML = getActiveTeam().map(m => {
+    const s = getStaffSettings(m.uid);
+    const dayToggles = DAY_LABELS.map((lbl,i) => {
+      const d = DAY_JS[i], active = s.workDays.includes(d);
+      return `<button class="day-toggle ${active?'active':''}" data-uid="${m.uid}" data-day="${d}" onclick="toggleWorkDay(this)">${lbl}</button>`;
+    }).join('');
+    const schedRows = DAY_JS.map(d => {
+      const isWork = s.workDays.includes(d);
+      const sc     = s.daySchedule?.[d] || {start:'09:00',finish:'17:30'};
+      return `<div class="schedule-day-row ${isWork?'':'inactive'}" id="sched-row-${m.uid}-${d}">
+        <span class="schedule-day-label">${DAY_NAMES[d]}</span>
+        <input type="time" class="schedule-time-input" id="sched-start-${m.uid}-${d}" value="${sc.start}">
+        <span class="schedule-sep">to</span>
+        <input type="time" class="schedule-time-input" id="sched-finish-${m.uid}-${d}" value="${sc.finish}">
+      </div>`;
+    }).join('');
+
+    return `<div class="settings-employee-row">
+      <div class="settings-row-top">
+        <div class="settings-emp-info">
+          <div class="settings-emp-name">${m.name}</div>
+          <div class="settings-emp-dept">${m.department} * ${cap(m.role)}</div>
+        </div>
+        <div class="settings-fields">
+          <div class="settings-field">
+            <label>Annual leave (days)</label>
+            <input type="number" id="setting-leave-${m.uid}" value="${s.leaveEntitlement}" min="0" max="365" step="1">
+          </div>
+          <div class="settings-field">
+            <label>Hours / day</label>
+            <input type="number" id="setting-hours-${m.uid}" value="${s.hoursPerDay}" min="1" max="24" step="0.5"
+              onchange="applyHoursToSchedule('${m.uid}')">
+          </div>
+          <div class="settings-field">
+            <label>Working days</label>
+            <div class="day-pattern" id="days-${m.uid}">${dayToggles}</div>
+          </div>
+          <button class="btn-expand-schedule" onclick="toggleSchedulePanel('${m.uid}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Hours
+          </button>
+          <button class="btn-save-settings" onclick="saveStaffSettings('${m.uid}')">Save</button>
+        </div>
+      </div>
+      <div class="schedule-panel" id="schedule-panel-${m.uid}">
+        <div class="schedule-panel-title">Start &amp; finish times per day</div>
+        <div class="schedule-grid">${schedRows}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// When "hours/day" changes, auto-calculate and fill start/finish for active work days
+window.applyHoursToSchedule = uid => {
+  const hoursPerDay = parseFloat(document.getElementById(`setting-hours-${uid}`)?.value) || 7.5;
+  const totalMins   = Math.round(hoursPerDay * 60);
+  const settings    = getStaffSettings(uid);
+  const [ss,sm]     = settings.daySchedule?.[1]?.start?.split(':').map(Number) || [9,0]; // use Mon start as base
+  const startMins   = ss*60+sm;
+  const finishMins  = startMins + totalMins;
+  const finishH = Math.floor(finishMins/60), finishM = finishMins%60;
+  const finishStr = `${pad(finishH)}:${pad(finishM)}`;
+
+  const DAY_JS = [1,2,3,4,5,6,0];
+  DAY_JS.forEach(d => {
+    const finEl = document.getElementById(`sched-finish-${uid}-${d}`);
+    if (finEl) finEl.value = finishStr;
+  });
+};
+
+window.toggleSchedulePanel = uid => {
+  document.getElementById(`schedule-panel-${uid}`).classList.toggle('open');
+};
+
+window.toggleWorkDay = btn => {
+  btn.classList.toggle('active');
+  const uid = btn.dataset.uid, d = btn.dataset.day;
+  const row = document.getElementById(`sched-row-${uid}-${d}`);
+  if (row) row.classList.toggle('inactive', !btn.classList.contains('active'));
+};
+
+window.saveStaffSettings = uid => {
+  const leaveVal = parseFloat(document.getElementById(`setting-leave-${uid}`)?.value) || 25;
+  const hoursVal = parseFloat(document.getElementById(`setting-hours-${uid}`)?.value) || 7.5;
+  const workDays = [];
+  document.querySelectorAll(`#days-${uid} .day-toggle`).forEach(b=>{ if(b.classList.contains('active')) workDays.push(parseInt(b.dataset.day)); });
+  if (!workDays.length) { showToast('Select at least one working day','amber'); return; }
+  const DAY_JS = [1,2,3,4,5,6,0];
+  const daySchedule = {};
+  DAY_JS.forEach(d => {
+    const sEl = document.getElementById(`sched-start-${uid}-${d}`);
+    const fEl = document.getElementById(`sched-finish-${uid}-${d}`);
+    if (sEl&&fEl) daySchedule[d] = { start:sEl.value||'09:00', finish:fEl.value||'17:30' };
+  });
+  S.staffSettings[uid] = { leaveEntitlement:leaveVal, hoursPerDay:hoursVal, workDays, daySchedule };
+  // Propagate leave entitlement to userOverrides so profile page sees it
+  if (!S.userOverrides[uid]) S.userOverrides[uid] = {};
+  S.userOverrides[uid].leaveEntitlement = leaveVal;
+  saveState();
+  const name = getUser(uid)?.name || uid;
+  showToast(`Settings saved for ${name}`, 'green');
+};
+
+// ======================================================
+//  USER MANAGEMENT
+// ======================================================
+function loadUserMgmt() {
+  const active   = getAllUsers().filter(u => u.active !== false);
+  const archived = getAllUsers().filter(u => u.active === false);
+
+  // Active users table (5 columns: Name, Email, Dept, Role, Reports to, Actions)
+  document.getElementById('user-mgmt-body').innerHTML = active.map(u => {
+    const mgr = u.managerId ? getUser(u.managerId) : null;
+    const roleCol = {admin:'green',senior_manager:'purple',manager:'amber',employee:'blue'}[u.role]||'blue';
+    return `<tr>
+      <td class="td-primary">${u.name}</td>
+      <td style="font-size:13px;color:var(--text2);">${u.email}</td>
+      <td>${u.department}</td>
+      <td><span class="pill pill-${roleCol}">${roleLabel(u.role)}</span></td>
+      <td style="font-size:13px;color:var(--text2);">${mgr?mgr.name:'-'}</td>
+      <td style="text-align:right;display:flex;gap:6px;justify-content:flex-end;">
+        <button class="btn btn-sm btn-ghost"  onclick="openEditUserModal('${u.uid}')">Edit</button>
+        <button class="btn btn-sm btn-amber"  onclick="toggleUserActive('${u.uid}',false)">Deactivate</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Archived section
+  document.getElementById('archived-count').textContent = archived.length;
+  const archBody = document.getElementById('archived-body');
+  if (archBody) {
+    archBody.innerHTML = archived.length ? archived.map(u => `<tr>
+      <td class="td-primary" style="opacity:.6;">${u.name}</td>
+      <td style="font-size:13px;color:var(--text3);">${u.email}</td>
+      <td style="color:var(--text3);">${u.department}</td>
+      <td><span class="pill pill-gray">${roleLabel(u.role)}</span></td>
+      <td><span class="status-badge-inactive">Inactive</span></td>
+      <td style="text-align:right;"><button class="btn btn-sm btn-green" onclick="toggleUserActive('${u.uid}',true)">Reactivate</button></td>
+    </tr>`).join('') : '<tr><td colspan="6"><div class="empty-state"><p>No archived users</p></div></td></tr>';
+  }
+}
+
+window.onEditRoleChange = () => {
+  const role = document.getElementById('edit-role').value;
+  const managesGroup = document.getElementById('edit-manages-group');
+  const reportsToGroup = document.getElementById('edit-reports-to-group');
+  managesGroup.style.display = (role === 'senior_manager') ? 'block' : 'none';
+  reportsToGroup.style.display = (role === 'admin') ? 'none' : 'block';
+};
+
+function populateReportsToDropdown(selectedId, excludeUid) {
+  const sel = document.getElementById('edit-manager-id');
+  const potManagers = getAllUsers().filter(u =>
+    u.active !== false && u.uid !== excludeUid &&
+    (u.role === 'manager' || u.role === 'senior_manager' || u.role === 'admin')
+  );
+  sel.innerHTML = '<option value="">- None -</option>' +
+    potManagers.map(m => `<option value="${m.uid}" ${m.uid===selectedId?'selected':''}>${m.name} (${roleLabel(m.role)})</option>`).join('');
+}
+
+function populateManagesList(uid, currentlyManagedIds) {
+  // For senior managers: show all managers they can oversee
+  const managers = getAllUsers().filter(u =>
+    u.active !== false && u.uid !== uid && u.role === 'manager'
+  );
+  const listEl = document.getElementById('edit-manages-list');
+  if (!managers.length) { listEl.innerHTML = '<div style="font-size:13px;color:var(--text3);">No managers in the system yet.</div>'; return; }
+  listEl.innerHTML = managers.map(m => `
+    <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface2);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;">
+      <input type="checkbox" value="${m.uid}" ${currentlyManagedIds.includes(m.uid)?'checked':''} style="width:15px;height:15px;accent-color:var(--accent);">
+      <span>${m.name} <span style="color:var(--text3);font-size:11px;">(${m.department})</span></span>
+    </label>`).join('');
+}
+
+window.openAddUserModal = () => {
+  document.getElementById('user-edit-title').textContent  = 'Add user';
+  document.getElementById('user-edit-sub').textContent    = 'Fill in the details for the new team member.';
+  document.getElementById('edit-uid').value       = '';
+  document.getElementById('edit-firstname').value = '';
+  document.getElementById('edit-lastname').value  = '';
+  document.getElementById('edit-email').value     = '';
+  populateDeptDropdown('Finance');
+  document.getElementById('edit-role').value      = 'employee';
+  document.getElementById('edit-password').value  = '';
+  document.getElementById('edit-password-label').textContent = 'Password';
+  populateReportsToDropdown('', '');
+  populateManagesList('', []);
+  document.getElementById('edit-manages-group').style.display = 'none';
+  document.getElementById('edit-reports-to-group').style.display = 'block';
+  openModal('modal-user-edit');
+};
+
+window.openEditUserModal = uid => {
+  const u = getUser(uid);
+  if (!u) return;
+  document.getElementById('user-edit-title').textContent = `Edit: ${u.name}`;
+  document.getElementById('user-edit-sub').textContent   = 'Update details. Leave password blank to keep unchanged.';
+  document.getElementById('edit-uid').value       = uid;
+  const parts = u.name.split(' ');
+  document.getElementById('edit-firstname').value = parts[0]||'';
+  document.getElementById('edit-lastname').value  = parts.slice(1).join(' ')||'';
+  document.getElementById('edit-email').value     = u.email;
+  populateDeptDropdown(u.department);
+  document.getElementById('edit-role').value      = u.role;
+  document.getElementById('edit-password').value  = '';
+  document.getElementById('edit-password-label').textContent = 'Reset password (leave blank to keep)';
+
+  // Reports to dropdown (hide for admins)
+  populateReportsToDropdown(u.managerId||'', uid);
+  document.getElementById('edit-reports-to-group').style.display = (u.role === 'admin') ? 'none' : 'block';
+
+  // For senior managers: show the list of managers they oversee
+  if (u.role === 'senior_manager') {
+    // Managers whose managerId === uid are currently under this senior manager
+    const currentlyManaged = getAllUsers().filter(m => m.managerId === uid).map(m => m.uid);
+    populateManagesList(uid, currentlyManaged);
+    document.getElementById('edit-manages-group').style.display = 'block';
+  } else {
+    document.getElementById('edit-manages-group').style.display = 'none';
+  }
+
+  openModal('modal-user-edit');
+};
+
+window.saveUserEdit = () => {
+  const uid       = document.getElementById('edit-uid').value.trim();
+  const firstName = document.getElementById('edit-firstname').value.trim();
+  const lastName  = document.getElementById('edit-lastname').value.trim();
+  const email     = document.getElementById('edit-email').value.trim().toLowerCase();
+  const dept      = document.getElementById('edit-dept').value;
+  const role      = document.getElementById('edit-role').value;
+  const password  = document.getElementById('edit-password').value;
+  const managerId = document.getElementById('edit-manager-id').value || null;
+
+  if (!firstName||!email) { showToast('First name and email are required','amber'); return; }
+  const name = `${firstName} ${lastName}`.trim();
+
+  if (uid) {
+    if (!S.userOverrides[uid]) S.userOverrides[uid] = {};
+    Object.assign(S.userOverrides[uid], { name, email, department:dept, role, managerId });
+    if (password) S.userOverrides[uid].password = password;
+
+    // For senior manager: update managerId on each manager they now oversee
+    if (role === 'senior_manager') {
+      const checkedBoxes = document.querySelectorAll('#edit-manages-list input[type=checkbox]');
+      checkedBoxes.forEach(cb => {
+        const mgrUid = cb.value;
+        if (!S.userOverrides[mgrUid]) S.userOverrides[mgrUid] = {};
+        if (cb.checked) {
+          S.userOverrides[mgrUid].managerId = uid;
+        } else {
+          // Only clear if they were pointing to this senior manager
+          const mgr = getUser(mgrUid);
+          if (mgr && mgr.managerId === uid) S.userOverrides[mgrUid].managerId = null;
+        }
+      });
+    }
+    saveState();
+    showToast(`${name} updated`, 'green');
+  } else {
+    const newUid = 'u' + Date.now();
+    BASE_USERS.push({ uid:newUid, email, password:password||'demo1234', name, role, managerId, department:dept, leaveEntitlement:25, createdAt:new Date().toISOString().split('T')[0], active:true, workDays:[1,2,3,4,5], hoursPerDay:7.5, daySchedule:{...DEFAULT_SCHEDULE} });
+    saveState();
+    showToast(`${name} added`, 'green');
+  }
+  closeModal('modal-user-edit');
+  loadUserMgmt();
+  loadWorkPatterns();
+};
+
+window.toggleUserActive = (uid, active) => {
+  if (!S.userOverrides[uid]) S.userOverrides[uid] = {};
+  S.userOverrides[uid].active = active;
+  saveState();
+  const name = getUser(uid)?.name || uid;
+  showToast(`${name} ${active?'reactivated':'deactivated'}`, active?'green':'amber');
+  loadUserMgmt();
+  loadWorkPatterns();
+};
+
+window.toggleArchivedSection = () => {
+  const list = document.getElementById('archived-list');
+  const chev = document.getElementById('archived-chevron');
+  list.classList.toggle('open');
+  chev.classList.toggle('open');
+};
+
+// ======================================================
+//  COMPANY SETTINGS PAGE
+// ======================================================
+function loadCompanyPage() {
+  // Guarantee companySettings is initialised before rendering
+  if (!S.companySettings) {
+    S.companySettings = { departments:['Finance','Operations','HR','Engineering','Sales','Design','Marketing','Management'] };
+    saveState();
+  }
+  if (!S.companySettings.departments || !S.companySettings.departments.length) {
+    S.companySettings.departments = ['Finance','Operations','HR','Engineering','Sales','Design','Marketing','Management'];
+    saveState();
+  }
+  // Deduplicate
+  S.companySettings.departments = [...new Set(S.companySettings.departments.map(d => d.trim()).filter(Boolean))];
+  // Render - element is guaranteed present because navigateTo adds 'active' to page-company first
+  renderDeptList();
+}
+
+function getDepartments() {
+  // Always return a deduplicated, sorted list
+  const depts = S.companySettings?.departments || ['Finance','Operations','HR'];
+  return [...new Set(depts)].sort((a,b) => a.localeCompare(b));
+}
+
+function renderDeptList() {
+  const el = document.getElementById('dept-list');
+  const depts = getDepartments();
+  if (!depts.length) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:8px 0;">No departments added yet.</div>';
+    return;
+  }
+  el.innerHTML = depts.map((d,i) => {
+    const inUse = getActiveTeam().some(u => u.department === d);
+    return `<div class="dept-item">
+      <span class="dept-item-name">${d}</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${inUse ? `<span style="font-size:11px;color:var(--text3);font-style:italic;">${getActiveTeam().filter(u=>u.department===d).length} user${getActiveTeam().filter(u=>u.department===d).length!==1?'s':''}</span>` : ''}
+        <button class="btn-dept-delete" onclick="deleteDepartment(${i})"
+          title="${inUse ? 'Cannot delete - users assigned' : 'Remove department'}"
+          ${inUse ? 'disabled style="opacity:.35;cursor:not-allowed;"' : ''}> </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.addDepartment = () => {
+  const inp = document.getElementById('new-dept-input');
+  const name = inp.value.trim();
+  if (!name) { showToast('Enter a department name','amber'); return; }
+  const depts = getDepartments();
+  if (depts.some(d => d.toLowerCase() === name.toLowerCase())) {
+    showToast(`"${name}" already exists`,'amber'); return;
+  }
+  S.companySettings.departments = [...depts, name];
+  saveState();
+  inp.value = '';
+  renderDeptList();
+  showToast(`"${name}" added`,'green');
+};
+
+window.deleteDepartment = idx => {
+  const depts = getDepartments();
+  const name = depts[idx];
+  const usersInDept = getActiveTeam().filter(u => u.department === name);
+  if (usersInDept.length > 0) {
+    const names = usersInDept.map(u => u.name).join(', ');
+    showToast(`Cannot delete "${name}" - reassign ${names} first`,'amber');
+    return;
+  }
+  S.companySettings.departments = depts.filter(d => d !== name);
+  saveState();
+  renderDeptList();
+  showToast(`"${name}" removed`,'amber');
+};
+
+// Helper: populate the department dropdown in add/edit modal from live company settings
+function populateDeptDropdown(selectedDept) {
+  const sel = document.getElementById('edit-dept');
+  const depts = getDepartments();
+  sel.innerHTML = depts.map(d => `<option value="${d}" ${d===selectedDept?'selected':''}>${d}</option>`).join('');
+}
+
+// ======================================================
+//  PROFILE PAGE
+// ======================================================
+function loadProfilePage() {
+  const u = getUser(currentUser.uid) || currentUserData;
+  const s = getStaffSettings(currentUser.uid);
+  const col = roleColor(u.role);
+  const av = document.getElementById('profile-avatar-lg');
+  av.textContent = initials(u.name); av.style.background = col+'22'; av.style.color = col;
+  document.getElementById('profile-name').textContent  = u.name;
+  document.getElementById('profile-email').textContent = u.email;
+  document.getElementById('profile-role').textContent  = cap(u.role==='senior_manager'?'Senior Manager':u.role);
+  document.getElementById('profile-dept').textContent  = u.department||'General';
+  // Member since: properly formatted
+  document.getElementById('profile-since').textContent = u.createdAt ? formatDate(u.createdAt) : 'N/A';
+  document.getElementById('profile-leave').textContent = `${s.leaveEntitlement} days`;
+  // Reports to
+  const mgrEl = document.getElementById('profile-manager');
+  if (mgrEl) {
+    const mgr = u.managerId ? getUser(u.managerId) : null;
+    mgrEl.textContent = mgr ? mgr.name : '-';
+  }
+}
+
+// ======================================================
+//  TEAM CALENDAR
+// ======================================================
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-indexed
+let calSelectedDate = null; // currently clicked date
+
+function getCalendarTeam() {
+  // Employees see their own team (people who share the same manager)
+  // Managers/Senior Managers/Admin see their managed team
+  const u = getUser(currentUser.uid);
+  if (u.role === 'employee') {
+    // Show self + colleagues who share the same manager
+    const peers = u.managerId
+      ? getActiveTeam().filter(x => x.managerId === u.managerId || x.uid === u.uid)
+      : [u];
+    return peers;
+  }
+  // For managers/senior_managers/admin: show their managed team + self
+  const team = getManagedTeam(currentUser.uid);
+  const self = getUser(currentUser.uid);
+  const all  = [self, ...team];
+  return [...new Map(all.map(x=>[x.uid,x])).values()];
+}
+
+function loadCalendarPage() {
+  // Always reset to current month when the page is opened
+  const now = new Date();
+  calYear  = now.getFullYear();
+  calMonth = now.getMonth();
+  calSelectedDate = null;
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const firstDay  = new Date(calYear, calMonth, 1);
+  const lastDay   = new Date(calYear, calMonth + 1, 0);
+  const todayStr  = toDateStr(new Date());
+
+  document.getElementById('cal-month-title').textContent =
+    firstDay.toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+
+  // Day headers Mon-Sun
+  const DAY_HDRS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  document.getElementById('cal-day-headers').innerHTML =
+    DAY_HDRS.map(d=>`<div class="cal-day-hdr">${d}</div>`).join('');
+
+  // Get team leave for this month
+  const team     = getCalendarTeam();
+  const teamUids = team.map(u=>u.uid);
+  const leaveThisMonth = (S.leaveRequests||[]).filter(r => {
+    if (!teamUids.includes(r.userId)) return false;
+    if (r.status !== 'approved' && r.status !== 'pending') return false;
+    // Overlaps this month?
+    const mStart = toDateStr(firstDay);
+    const mEnd   = toDateStr(lastDay);
+    return r.startDate <= mEnd && r.endDate >= mStart;
+  });
+
+  // Build cell map: date -> [leave entries]
+  const cellMap = {};
+  leaveThisMonth.forEach(r => {
+    for (let d = new Date(r.startDate+'T12:00:00'); d <= new Date(r.endDate+'T12:00:00'); d.setDate(d.getDate()+1)) {
+      const ds = toDateStr(d);
+      if (!cellMap[ds]) cellMap[ds] = [];
+      cellMap[ds].push(r);
+    }
+  });
+
+  // Monday-first offset
+  let startDow = (firstDay.getDay() + 6) % 7; // Mon=0
+  let cells = '';
+
+  // Empty leading cells
+  for (let i = 0; i < startDow; i++) cells += `<div class="cal-cell empty"></div>`;
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const dateStr  = `${calYear}-${pad(calMonth+1)}-${pad(d)}`;
+    const dow      = new Date(dateStr+'T12:00:00').getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    const isToday  = dateStr === todayStr;
+    const events   = cellMap[dateStr] || [];
+    const maxShow  = 2;
+    const shown    = events.slice(0, maxShow);
+    const overflow = events.length - maxShow;
+
+    const chips = shown.map(r => {
+      const name  = r.userName.split(' ')[0];
+      const cls   = r.status === 'approved' ? 'cal-chip-approved' : 'cal-chip-pending';
+      return `<div class="cal-chip ${cls}" title="${r.userName} - ${r.type}">${name}</div>`;
+    }).join('');
+    const moreChip = overflow > 0 ? `<div class="cal-chip-more">+${overflow} more</div>` : '';
+
+    cells += `<div class="cal-cell${isWeekend?' weekend':''}${isToday?' today':''}${calSelectedDate===dateStr?' selected':''}"
+      data-date="${dateStr}"
+      onclick="showCalDay('${dateStr}')">
+      <div class="cal-day-num">${d}</div>
+      ${chips}${moreChip}
+    </div>`;
+  }
+
+  document.getElementById('cal-grid').innerHTML = cells;
+  document.getElementById('cal-event-panel').style.display = 'none';
+}
+
+window.showCalDay = dateStr => {
+  // Remove selected class from previous cell
+  document.querySelectorAll('.cal-cell.selected').forEach(el => el.classList.remove('selected'));
+  // Add selected class to clicked cell
+  const clickedCell = document.querySelector(`.cal-cell[data-date="${dateStr}"]`);
+  if (clickedCell) clickedCell.classList.add('selected');
+  calSelectedDate = dateStr;
+
+  const team     = getCalendarTeam();
+  const teamUids = team.map(u=>u.uid);
+  const events   = (S.leaveRequests||[]).filter(r =>
+    teamUids.includes(r.userId) &&
+    (r.status === 'approved' || r.status === 'pending') &&
+    r.startDate <= dateStr && r.endDate >= dateStr
+  );
+
+  const panel    = document.getElementById('cal-event-panel');
+  const dateEl   = document.getElementById('cal-event-date');
+  const listEl   = document.getElementById('cal-event-list');
+  const label    = new Date(dateStr+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  dateEl.textContent = label;
+
+  if (!events.length) {
+    listEl.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:8px 0;">No leave on this day.</div>';
+  } else {
+    listEl.innerHTML = events.map(r => {
+      const cls    = r.status === 'approved' ? 'pill-green' : 'pill-amber';
+      const dr     = r.startDate === r.endDate ? formatDate(r.startDate) : `${formatDate(r.startDate)} - ${formatDate(r.endDate)}`;
+      return `<div class="cal-event-row">
+        <div>
+          <div class="cal-event-name">${r.userName}</div>
+          <div class="cal-event-type">${r.type} * ${dr} * ${r.days} day${r.days!==1?'s':''}</div>
+        </div>
+        <span class="pill ${cls}">${cap(r.status)}</span>
+      </div>`;
+    }).join('');
+  }
+  panel.style.display = 'block';
+};
+
+window.calPrev = () => {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+};
+window.calNext = () => {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+};
+
+// ======================================================
+//  REPORTING
+// ======================================================
+let activeReportTab = 'clockin';
+let lastClockData   = [];
+let lastLeaveData   = [];
+
+window.switchReportTab = tab => {
+  activeReportTab = tab;
+  ['clockin','leave'].forEach(t => {
+    document.getElementById(`rtab-${t}`).classList.toggle('active', t===tab);
+    const el = document.getElementById(`rpt-${t}-content`);
+    if (el) el.style.display = t===tab ? 'block' : 'none';
+  });
+  runReport();
+};
+
+function loadReportingPage() {
+  // Default date range: current month
+  const now  = new Date();
+  const from = `${now.getFullYear()}-${pad(now.getMonth()+1)}-01`;
+  const last = new Date(now.getFullYear(), now.getMonth()+1, 0);
+  const to   = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(last.getDate())}`;
+  const fromEl = document.getElementById('rpt-from');
+  const toEl   = document.getElementById('rpt-to');
+  if (!fromEl.value) fromEl.value = from;
+  if (!toEl.value)   toEl.value   = to;
+
+  populateReportFilters();
+
+  // Reset tab state
+  activeReportTab = 'clockin';
+  ['clockin','leave'].forEach(t => {
+    document.getElementById(`rtab-${t}`)?.classList.toggle('active', t==='clockin');
+    const el = document.getElementById(`rpt-${t}-content`);
+    if (el) el.style.display = t==='clockin' ? 'block' : 'none';
+  });
+
+  runReport();
+}
+
+// Populate all three filter dropdowns, cascading dept -> manager -> employee
+function populateReportFilters() {
+  const team = getReportingTeam();
+
+  // ── Department filter ──
+  const depts = [...new Set(team.map(m => m.department))].sort();
+  const deptSel = document.getElementById('rpt-department');
+  const prevDept = deptSel.value;
+  deptSel.innerHTML = '<option value="all">All departments</option>' +
+    depts.map(d => `<option value="${d}" ${d===prevDept?'selected':''}>${d}</option>`).join('');
+
+  // ── Manager (Reports to) filter ──
+  // Show managers who appear as managerId for anyone in the reporting team
+  const managerIds = [...new Set(team.map(m => m.managerId).filter(Boolean))];
+  const managers   = managerIds.map(id => getUser(id)).filter(Boolean);
+  const mgrSel     = document.getElementById('rpt-manager');
+  const prevMgr    = mgrSel.value;
+  mgrSel.innerHTML = '<option value="all">All managers</option>' +
+    managers.map(m => `<option value="${m.uid}" ${m.uid===prevMgr?'selected':''}>${m.name}</option>`).join('');
+
+  // ── Employee filter (cascade from dept + manager) ──
+  const selectedDept = deptSel.value;
+  const selectedMgr  = mgrSel.value;
+  let filtered = team;
+  if (selectedDept !== 'all') filtered = filtered.filter(m => m.department === selectedDept);
+  if (selectedMgr  !== 'all') filtered = filtered.filter(m => m.managerId  === selectedMgr);
+  const empSel  = document.getElementById('rpt-employee');
+  const prevEmp = empSel.value;
+  empSel.innerHTML = '<option value="all">All employees</option>' +
+    filtered.map(m => `<option value="${m.uid}" ${m.uid===prevEmp?'selected':''}>${m.name}</option>`).join('');
+}
+
+// Called when dept or manager filter changes — re-cascade employee list then re-run
+window.onReportFilterChange = () => {
+  populateReportFilters();
+  runReport();
+};
+
+// Reporting team: same as managed team but includes self for managers
+function getReportingTeam() {
+  const u    = getUser(currentUser.uid);
+  if (u.role === 'admin') return getActiveTeam().filter(x=>x.uid!==u.uid);
+  const team = getManagedTeam(currentUser.uid);
+  return team;
+}
+
+window.runReport = () => {
+  const from    = document.getElementById('rpt-from').value;
+  const to      = document.getElementById('rpt-to').value;
+  const deptFilter = document.getElementById('rpt-department')?.value || 'all';
+  const mgrFilter  = document.getElementById('rpt-manager')?.value   || 'all';
+  const empFilter  = document.getElementById('rpt-employee')?.value  || 'all';
+
+  let filtered = getReportingTeam();
+  if (deptFilter !== 'all') filtered = filtered.filter(m => m.department === deptFilter);
+  if (mgrFilter  !== 'all') filtered = filtered.filter(m => m.managerId  === mgrFilter);
+  if (empFilter  !== 'all') filtered = filtered.filter(m => m.uid        === empFilter);
+
+  if (activeReportTab === 'clockin') runClockReport(from, to, filtered);
+  else                                runLeaveReport(from, to, filtered);
+};
+
+function runClockReport(from, to, team) {
+  lastClockData = [];
+  team.forEach(m => {
+    (S.timesheets[m.uid]||[]).forEach(e => {
+      if (e.date >= from && e.date <= to) lastClockData.push({...e, memberName:m.name, memberUid:m.uid});
+    });
+  });
+  lastClockData.sort((a,b) => b.date.localeCompare(a.date) || a.memberName.localeCompare(b.memberName));
+
+  // Summary stats
+  let totalMins=0, lateDays=0, earlyDays=0, completedShifts=0;
+  lastClockData.forEach(e => {
+    if (!e.clockIn || !e.clockOut) return;
+    completedShifts++;
+    if (e.duration) totalMins += e.duration;
+    const inT  = new Date(e.clockIn);
+    const outT = new Date(e.clockOut);
+    const sched = getStaffSettings(e.memberUid).daySchedule?.[inT.getDay()];
+    if (sched) {
+      const [ss,sm] = sched.start.split(':').map(Number);
+      const [fs,fm] = sched.finish.split(':').map(Number);
+      if ((inT.getHours()*60+inT.getMinutes()) - (ss*60+sm) > 2)  lateDays++;
+      if ((fs*60+fm) - (outT.getHours()*60+outT.getMinutes()) > 2) earlyDays++;
+    }
+  });
+
+  document.getElementById('rpt-summary').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Completed shifts</div><div class="stat-value stat-blue">${completedShifts}</div><div class="stat-sub">in period</div></div>
+    <div class="stat-card"><div class="stat-label">Total hours</div><div class="stat-value stat-green">${fmtHM(totalMins)}</div><div class="stat-sub">logged</div></div>
+    <div class="stat-card"><div class="stat-label">Late starts</div><div class="stat-value stat-amber">${lateDays}</div><div class="stat-sub">occurrences</div></div>
+    <div class="stat-card"><div class="stat-label">Early finishes</div><div class="stat-value stat-red">${earlyDays}</div><div class="stat-sub">occurrences</div></div>`;
+
+  document.getElementById('rpt-clockin-sub').textContent = `${formatDate(from)} - ${formatDate(to)} * ${lastClockData.length} records`;
+  const tbody = document.getElementById('rpt-clockin-body');
+  if (!lastClockData.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>No records in this period.</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = lastClockData.map(e => {
+    const inT   = new Date(e.clockIn);
+    const outT  = e.clockOut ? new Date(e.clockOut) : null;
+    const sched = getStaffSettings(e.memberUid).daySchedule?.[inT.getDay()];
+    return `<tr>
+      <td class="td-primary">${e.memberName}</td>
+      <td>${new Date(e.date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</td>
+      <td>${sched?`<span style="font-family:var(--mono);font-size:12px;">${sched.start}-${sched.finish}</span>`:'-'}</td>
+      <td class="td-mono">${inT.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</td>
+      <td class="td-mono">${outT?outT.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'<span style="color:var(--green);font-size:12px;">Active</span>'}</td>
+      <td class="td-mono">${e.duration?fmtHM(e.duration):'-'}</td>
+      <td>${buildVariance(inT,outT,sched,!outT&&!!S.clockedIn[e.memberUid])}</td>
+    </tr>`;
+  }).join('');
+}
+
+function runLeaveReport(from, to, team) {
+  const teamUids = team.map(u=>u.uid);
+  lastLeaveData  = (S.leaveRequests||[]).filter(r => {
+    if (!teamUids.includes(r.userId)) return false;
+    return r.startDate <= to && r.endDate >= from;
+  }).sort((a,b) => b.startDate.localeCompare(a.startDate));
+
+  // Summary
+  const approved = lastLeaveData.filter(r=>r.status==='approved');
+  const pending  = lastLeaveData.filter(r=>r.status==='pending');
+  const declined = lastLeaveData.filter(r=>r.status==='declined');
+  const totalDays= approved.reduce((s,r)=>s+r.days,0);
+
+  document.getElementById('rpt-summary').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total requests</div><div class="stat-value stat-blue">${lastLeaveData.length}</div><div class="stat-sub">in period</div></div>
+    <div class="stat-card"><div class="stat-label">Approved days</div><div class="stat-value stat-green">${totalDays}</div><div class="stat-sub">annual leave</div></div>
+    <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value stat-amber">${pending.length}</div><div class="stat-sub">awaiting decision</div></div>
+    <div class="stat-card"><div class="stat-label">Declined</div><div class="stat-value stat-red">${declined.length}</div><div class="stat-sub">requests</div></div>`;
+
+  document.getElementById('rpt-leave-sub').textContent = `${formatDate(from)} - ${formatDate(to)} * ${lastLeaveData.length} records`;
+  const tbody = document.getElementById('rpt-leave-body');
+  if (!lastLeaveData.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>No leave records in this period.</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = lastLeaveData.map(r => {
+    const pm = {approved:'pill-green',pending:'pill-amber',declined:'pill-red'};
+    return `<tr>
+      <td class="td-primary">${r.userName}</td>
+      <td>${r.type}</td>
+      <td class="td-mono">${formatDate(r.startDate)}</td>
+      <td class="td-mono">${formatDate(r.endDate)}</td>
+      <td class="td-mono">${r.days}</td>
+      <td><span class="pill ${pm[r.status]||'pill-gray'}">${cap(r.status)}</span></td>
+      <td style="font-size:12px;color:var(--text3);">${r.decisionNote||'-'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// == EXPORT: Excel (CSV with .xls extension - opens in Excel) ==
+window.exportExcel = () => {
+  const from = document.getElementById('rpt-from').value;
+  const to   = document.getElementById('rpt-to').value;
+
+  let csv = '';
+  if (activeReportTab === 'clockin') {
+    if (!lastClockData.length) { showToast('Run the report first','amber'); return; }
+    csv = 'Employee,Date,Sched Start,Sched Finish,Clock In,Clock Out,Duration (mins),Variance\n';
+    lastClockData.forEach(e => {
+      const inT  = new Date(e.clockIn);
+      const outT = e.clockOut ? new Date(e.clockOut) : null;
+      const sched = getStaffSettings(e.memberUid).daySchedule?.[inT.getDay()]||{start:'',finish:''};
+      const varT  = buildVarianceText(inT, outT, sched);
+      csv += `"${e.memberName}","${e.date}","${sched.start}","${sched.finish}",` +
+             `"${inT.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}",` +
+             `"${outT?outT.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):''}"` +
+             `,"${e.duration||''}","${varT}"
+`;
+    });
+  } else {
+    if (!lastLeaveData.length) { showToast('Run the report first','amber'); return; }
+    csv = 'Employee,Leave type,Start date,End date,Days,Status,Decision note\n';
+    lastLeaveData.forEach(r => {
+      csv += `"${r.userName}","${r.type}","${r.startDate}","${r.endDate}","${r.days}","${r.status}","${r.decisionNote||''}"
+`;
+    });
+  }
+
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const name = `workforce_${activeReportTab}_${from}_${to}.csv`;
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Exported to Excel-compatible CSV','green');
+};
+
+// == EXPORT: PDF (opens print dialog pre-formatted) ==
+window.exportPDF = () => {
+  const from = document.getElementById('rpt-from').value;
+  const to   = document.getElementById('rpt-to').value;
+  const isClockIn = activeReportTab === 'clockin';
+  const data = isClockIn ? lastClockData : lastLeaveData;
+  if (!data.length) { showToast('Run the report first','amber'); return; }
+
+  const title  = isClockIn ? 'Clock-in Report' : 'Leave Report';
+  const period = formatDate(from) + ' to ' + formatDate(to);
+  const generated = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  let rows = '';
+  let headers = '';
+  if (isClockIn) {
+    headers = '<tr><th>Employee</th><th>Date</th><th>Scheduled</th><th>Clock In</th><th>Clock Out</th><th>Duration</th><th>Variance</th></tr>';
+    rows = lastClockData.map(e => {
+      const inT   = new Date(e.clockIn);
+      const outT  = e.clockOut ? new Date(e.clockOut) : null;
+      const sched = getStaffSettings(e.memberUid).daySchedule?.[inT.getDay()];
+      const varTx = buildVarianceText(inT, outT, sched || {start:'',finish:''});
+      return '<tr><td>' + e.memberName + '</td><td>' + e.date + '</td>' +
+        '<td>' + (sched ? sched.start + '-' + sched.finish : '') + '</td>' +
+        '<td>' + inT.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + '</td>' +
+        '<td>' + (outT ? outT.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '') + '</td>' +
+        '<td>' + (e.duration ? fmtHM(e.duration) : '') + '</td>' +
+        '<td>' + varTx + '</td></tr>';
+    }).join('');
+  } else {
+    headers = '<tr><th>Employee</th><th>Type</th><th>Start</th><th>End</th><th>Days</th><th>Status</th><th>Note</th></tr>';
+    rows = lastLeaveData.map(r =>
+      '<tr><td>' + r.userName + '</td><td>' + r.type + '</td><td>' + r.startDate + '</td>' +
+      '<td>' + r.endDate + '</td><td>' + r.days + '</td><td>' + r.status + '</td>' +
+      '<td>' + (r.decisionNote || '') + '</td></tr>'
+    ).join('');
+  }
+
+  const html = [
+    '<!DOCTYPE html><html><head><meta charset="UTF-8">',
+    '<title>' + title + '</title>',
+    '<style>',
+    'body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:24px;margin:0;}',
+    'h1{font-size:20px;margin:0 0 4px;}',
+    '.sub{font-size:12px;color:#555;margin-bottom:20px;}',
+    'table{width:100%;border-collapse:collapse;margin-top:8px;}',
+    'th{background:#f0f4f8;padding:9px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #d0d8e0;}',
+    'td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle;}',
+    'tr:nth-child(even) td{background:#f9fafb;}',
+    '@page{margin:1cm;}',
+    '@media print{body{padding:0;}}',
+    '</style></head><body>',
+    '<h1>' + title + '</h1>',
+    '<div class="sub">Period: ' + period + ' &nbsp;|&nbsp; Generated: ' + generated + '</div>',
+    '<table><thead>' + headers + '</thead><tbody>' + rows + '</tbody></table>',
+    '</body></html>'
+  ].join('');
+
+  // Use Blob URL to open in new tab - no script tags needed
+  const blob = new Blob([html], {type: 'text/html;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  if (win) {
+    win.addEventListener('load', () => {
+      setTimeout(() => { win.print(); URL.revokeObjectURL(url); }, 300);
+    });
+  } else {
+    // Fallback: direct download
+    const a = document.createElement('a');
+    a.href = url; a.download = title.replace(/ /g,'_') + '.html'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('PDF saved as HTML file - open and print','blue');
+  }
+};
+
+function buildVarianceText(inT, outT, sched) {
+  if (!sched || !sched.start) return '';
+  const [ss,sm] = sched.start.split(':').map(Number);
+  const [fs,fm] = sched.finish.split(':').map(Number);
+  const late  = (inT.getHours()*60+inT.getMinutes()) - (ss*60+sm);
+  const parts = [];
+  if (late > 2) parts.push(`+${fmtVariance(late)} late`);
+  if (outT) {
+    const early = (fs*60+fm) - (outT.getHours()*60+outT.getMinutes());
+    if (early > 2) parts.push(`-${fmtVariance(early)} early`);
+  }
+  return parts.length ? parts.join(', ') : 'On time';
+}
+
+// ======================================================
+//  HELPERS
+// ======================================================
+function pad(n) { return String(n).padStart(2,'0'); }
+function toDateStr(d) { return d.toISOString().split('T')[0]; }
+function fmtHM(m) { return `${Math.floor(m/60)}h ${m%60}m`; }
+function formatDuration(a,b) { const m=Math.floor((b-a)/60000); return `${Math.floor(m/60)}h ${m%60}m`; }
+function cap(s) { return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
+function roleLabel(role) { return {employee:'Employee',manager:'Manager',senior_manager:'Senior Manager',admin:'Admin'}[role]||cap(role); }
+function initials(name) { return name.split(' ').map(n=>n[0]).join('').toUpperCase(); }
+function roleColor(role) { return {employee:'#4f8ef7',manager:'#f5a623',senior_manager:'#a78bfa',admin:'#34c97a'}[role]||'#4f8ef7'; }
+function formatDate(str) { if(!str)return'-'; return new Date(str+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }
+function stopAllIntervals() { if(clockElapsedInterval)clearInterval(clockElapsedInterval); if(liveClockInterval)clearInterval(liveClockInterval); }
+function getUsedLeaveDays(uid) {
+  // Count unique working days across all approved Annual Leave requests
+  // This prevents double-counting if any overlapping requests slipped through
+  const approved = (S.leaveRequests||[]).filter(r=>r.userId===uid&&r.status==='approved'&&r.type==='Annual Leave');
+  const settings = getStaffSettings(uid);
+  const uniqueDays = new Set();
+  approved.forEach(r => {
+    for (let d=new Date(r.startDate+'T12:00:00'); d<=new Date(r.endDate+'T12:00:00'); d.setDate(d.getDate()+1)) {
+      if (settings.workDays.includes(d.getDay())) uniqueDays.add(d.toISOString().split('T')[0]);
+    }
+  });
+  return uniqueDays.size;
+}
+function countWorkDays(startStr, endStr, uid) {
+  const wds = getStaffSettings(uid).workDays;
+  let count = 0;
+  for (let d=new Date(startStr+'T12:00:00'); d<=new Date(endStr+'T12:00:00'); d.setDate(d.getDate()+1)) { if(wds.includes(d.getDay())) count++; }
+  return count;
+}
+
+window.openModal  = id => document.getElementById(id).classList.add('open');
+window.closeModal = id => document.getElementById(id).classList.remove('open');
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+document.getElementById('auth-password').addEventListener('keydown',e=>{if(e.key==='Enter')signIn();});
+
+window.showToast = (msg, type='blue') => {
+  const colors={green:'#34c97a',red:'#f75c5c',blue:'#4f8ef7',amber:'#f5a623'};
+  const t=document.createElement('div'); t.className='toast';
+  t.innerHTML=`<div class="toast-dot" style="background:${colors[type]||colors.blue}"></div>${msg}`;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},3500);
+};
+
+setInterval(()=>{
+  const el=document.getElementById('clock-display');
+  if(el&&document.getElementById('page-clock')?.classList.contains('active')){
+    const n=new Date(); el.textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  }
+},1000);
+
+// SVG ICONS
+function iClock()   { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`; }
+function iTeam()    { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`; }
+function iPerson()  { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`; }
+function iCal()     { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`; }
+function iCheck()   { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>`; }
+function iSettings(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`; }
+
+function iCalendar(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="8" y="14" width="3" height="3" rx=".5"/><rect x="13" y="14" width="3" height="3" rx=".5"/></svg>`; }
+function iReport(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`; }
+function iCompany(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`; }
+
+// ======================================================
+//  THEME TOGGLE (light / dark)
+// ======================================================
+function applyTheme(mode) {
+  if (mode === 'light') {
+    document.body.classList.add('light');
+  } else {
+    document.body.classList.remove('light');
+  }
+  try { localStorage.setItem('wf_theme', mode); } catch(e) {}
+}
+
+window.toggleTheme = function() {
+  var isLight = document.body.classList.contains('light');
+  applyTheme(isLight ? 'dark' : 'light');
+};
+
+// Apply saved preference on load - default is dark
+(function() {
+  var saved = 'dark';
+  try { var v = localStorage.getItem('wf_theme'); if(v) saved = v; } catch(e) {}
+  applyTheme(saved);
+})();
+
+if (DEMO_MODE) {
+  document.getElementById('app-loading').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+</script>
+</body>
+</html>
